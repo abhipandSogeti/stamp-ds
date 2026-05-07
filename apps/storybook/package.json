@@ -19,6 +19,7 @@
     "@storybook/addon-docs": "^8",
     "@storybook/addon-themes": "^8",
     "@storybook/addon-viewport": "^8",
+    "@storybook/web-components": "^8.6.18",
     "@storybook/web-components-vite": "^8",
     "chromatic": "^16.9.0",
     "lit": "^3",
