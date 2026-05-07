@@ -84,6 +84,14 @@ const config: StorybookConfig = {
     '@storybook/addon-a11y',
 
     /**
+     * @storybook/addon-themes
+     * Provides withThemeByDataAttribute decorator + a reliable "Themes" toolbar
+     * button registered directly in the manager (not via globalTypes channel).
+     * We use it to drive the light/dark token swap in preview.ts.
+     */
+    '@storybook/addon-themes',
+
+    /**
      * @storybook/addon-viewport
      * Adds a toolbar dropdown to simulate device screen sizes.
      * Built-in viewports: iPhone, iPad, desktop, etc.
