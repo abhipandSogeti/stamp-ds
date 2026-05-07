@@ -1,78 +1,82 @@
 # ─────────────────────────────────────────────────────────────────
 # CI — runs on every pull request and every push to main.
-# Goal: prove that the codebase builds and type-checks cleanly.
+# Goal: prove that the codebase builds and type-checks cleanly,
+#       with Turborepo caching so repeat runs skip unchanged work.
 # ─────────────────────────────────────────────────────────────────
 
-name: CI  # shown in the GitHub Actions UI
+name: CI
 
-# ── TRIGGER ──────────────────────────────────────────────────────
-# "When should this workflow fire?"
 on:
-  pull_request:           # every PR opened/updated against any branch
+  pull_request:
     branches: ["**"]
   push:
-    branches: [main]      # also runs after a merge lands on main
+    branches: [main]
 
-# ── CONCURRENCY ──────────────────────────────────────────────────
-# If you push twice in a row on the same PR, cancel the older run
-# instead of running both and wasting minutes.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-# ── JOBS ─────────────────────────────────────────────────────────
-# Each job runs in its own isolated VM in parallel (unless you add
-# "needs:" to sequence them).
 jobs:
-
-  # ── JOB: build-and-check ──────────────────────────────────────
   build-and-check:
     name: Build & Type-check
-    runs-on: ubuntu-latest   # free GitHub-hosted Linux runner
+    runs-on: ubuntu-latest
 
     steps:
-      # STEP 1 — Checkout your code onto the runner
-      # Without this, the VM has no files to work with.
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history — needed for Turborepo's change detection later
+          fetch-depth: 0
 
-      # STEP 2 — Install pnpm (your package manager)
-      # "uses:" pulls a pre-built action from the GitHub Marketplace.
-      # This is how you reuse others' automation without writing shell.
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9        # pin to the major version your lockfile was made with
+          version: 9
 
-      # STEP 3 — Install Node.js
-      # "cache: pnpm" tells this action to cache the pnpm store between
-      # runs so `pnpm install` is fast on repeat builds.
+      # "cache: pnpm" caches the pnpm *store* (downloaded tarballs).
+      # This speeds up `pnpm install` — packages don't re-download.
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
 
-      # STEP 4 — Install dependencies
-      # "--frozen-lockfile" fails the build if pnpm-lock.yaml is out of
-      # date. This prevents "it works locally" surprises.
+      # ── TURBOREPO CACHE ──────────────────────────────────────────
+      # This caches Turborepo's *task output* cache (~/.turbo).
+      # Turborepo writes a hash of each task's inputs here. On the
+      # next run, if the hash matches, Turbo skips the task entirely
+      # and restores the dist/ output without recompiling.
+      #
+      # Cache key strategy:
+      #   Primary key   = OS + lockfile hash  (exact match)
+      #   Restore key   = OS prefix           (partial match, any prior run)
+      #
+      # A lockfile change busts the primary key → fresh build → new
+      # cache entry saved. Partial restore still warms the cache for
+      # packages whose inputs didn't change.
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: ~/.turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # STEP 5 — Build all packages
-      # Turborepo runs tasks in dependency order automatically.
-      # tokens → icons → components → react/angular → storybook
+      # The TURBO_TELEMETRY_DISABLED env var opts out of Turborepo's
+      # anonymous usage analytics — good practice for CI.
       - name: Build
         run: pnpm build
+        env:
+          TURBO_TELEMETRY_DISABLED: 1
 
-      # STEP 6 — Type-check all packages
-      # turbo.json declares "type-check" depends on "^build",
-      # so Turbo first ensures everything is built before checking types.
       - name: Type-check
         run: pnpm type-check
+        env:
+          TURBO_TELEMETRY_DISABLED: 1
 
-      # STEP 7 — Lint (best-effort for now, we'll tighten this later)
       - name: Lint
         run: pnpm lint
+        env:
+          TURBO_TELEMETRY_DISABLED: 1
