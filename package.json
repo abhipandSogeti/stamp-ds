@@ -9,7 +9,7 @@
     "test":      "turbo run test",
     "changeset": "changeset",
     "version":   "changeset version",
-    "publish":   "turbo run build && changeset publish"
+    "release":   "turbo run build && changeset publish"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

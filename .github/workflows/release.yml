@@ -1,0 +1,98 @@
+# ─────────────────────────────────────────────────────────────────
+# Release — runs on every push to main.
+#
+# This workflow does ONE of two things depending on what merged:
+#
+#   A) Feature/fix PR merged → creates (or updates) a PR called
+#      "Version Packages" that bumps versions and writes changelogs.
+#
+#   B) "Version Packages" PR merged → publishes changed packages
+#      to npm and creates git tags.
+#
+# The changesets/action handles the A vs B decision automatically.
+# ─────────────────────────────────────────────────────────────────
+
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false  # NEVER cancel a release mid-flight
+
+jobs:
+  release:
+    name: Version or Publish
+    runs-on: ubuntu-latest
+
+    # These permissions let the action:
+    #   contents: write  → push version bump commits + create git tags
+    #   pull-requests: write → open/update the "Version Packages" PR
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history is required so Changesets can read git tags
+          # and determine what has already been published.
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          # Point npm at the registry with your token so `changeset publish`
+          # can authenticate. The token comes from the NPM_TOKEN secret.
+          registry-url: https://registry.npmjs.org
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Build all packages BEFORE publishing.
+      # Turborepo runs them in dependency order: tokens → components → react/angular
+      # Changesets doesn't know how to build — it only publishes what's in dist/.
+      - name: Build packages
+        run: pnpm build
+        env:
+          TURBO_TELEMETRY_DISABLED: 1
+
+      # ── THE KEY STEP ─────────────────────────────────────────────
+      # changesets/action reads the state of the repo and decides:
+      #
+      # If .changeset/*.md files exist on main (from merged feature PRs):
+      #   → runs `changeset version` (bumps package.json, writes changelogs)
+      #   → opens/updates a PR titled "Version Packages"
+      #   → does NOT publish yet
+      #
+      # If no .changeset/*.md files exist (the Version PR was just merged):
+      #   → runs the `publish` command below
+      #   → publishes to npm, creates git tags
+      - name: Create Release PR or Publish
+        uses: changesets/action@v1
+        with:
+          # The command to run when publishing. Must exit 0 on success.
+          # We already built above, so this just publishes dist/ to npm.
+          publish: pnpm changeset publish
+          # Customise the Version Packages PR title
+          title: "chore: version packages"
+          # Customise the commit message in the Version PR
+          commit: "chore: version packages"
+        env:
+          # GITHUB_TOKEN is automatically provided by GitHub Actions.
+          # Used to open/update the "Version Packages" pull request.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # NPM_TOKEN is a secret you create manually (see below).
+          # Used by `npm publish` under the hood when Changesets publishes.
+          # Set it at: repo → Settings → Secrets → Actions → NPM_TOKEN
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
