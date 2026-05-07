@@ -6,3 +6,4 @@ dist/
 
 # Turbo cache
 .turbo/
+storybook-static/
