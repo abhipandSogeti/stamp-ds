@@ -1,0 +1,22 @@
+{
+  "button": {
+    "bg": {
+      "default":  { "$value": "{color.brand.primary}",       "$type": "color" },
+      "hover":    { "$value": "{color.brand.primary-hover}",  "$type": "color" },
+      "disabled": { "$value": "{color.neutral.200}",          "$type": "color" }
+    },
+    "text": {
+      "default":  { "$value": "{color.neutral.0}",            "$type": "color" },
+      "disabled": { "$value": "{color.neutral.400}",          "$type": "color" }
+    },
+    "border": {
+      "default":  { "$value": "{color.brand.primary}",        "$type": "color" },
+      "focus":    { "$value": "{color.border.focus}",         "$type": "color" }
+    },
+    "radius":     { "$value": "{radius.lg}",                  "$type": "dimension" },
+    "padding-x":  { "$value": "{spacing.4}",                  "$type": "dimension" },
+    "padding-y":  { "$value": "{spacing.2}",                  "$type": "dimension" },
+    "font-size":  { "$value": "{typography.size.14}",         "$type": "dimension" },
+    "font-weight":{ "$value": "{typography.weight.semibold}",  "$type": "fontWeight" }
+  }
+}

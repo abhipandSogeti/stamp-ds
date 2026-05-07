@@ -1,0 +1,28 @@
+{
+  "badge": {
+    "neutral": {
+      "bg":   { "$value": "{color.neutral.100}", "$type": "color" },
+      "text": { "$value": "{color.text.secondary}", "$type": "color" }
+    },
+    "brand": {
+      "bg":   { "$value": "{color.brand.primary-subtle}", "$type": "color" },
+      "text": { "$value": "{color.brand.primary}", "$type": "color" }
+    },
+    "danger": {
+      "bg":   { "$value": "{color.feedback.danger-surface}", "$type": "color" },
+      "text": { "$value": "{color.text.danger}", "$type": "color" }
+    },
+    "success": {
+      "bg":   { "$value": "{color.feedback.success-surface}", "$type": "color" },
+      "text": { "$value": "{color.text.success}", "$type": "color" }
+    },
+    "warning": {
+      "bg":   { "$value": "{color.feedback.warning-surface}", "$type": "color" },
+      "text": { "$value": "{color.text.warning}", "$type": "color" }
+    },
+    "radius":    { "$value": "{radius.full}",         "$type": "dimension" },
+    "padding-x": { "$value": "{spacing.2}",           "$type": "dimension" },
+    "padding-y": { "$value": "{spacing.1}",           "$type": "dimension" },
+    "font-size": { "$value": "{typography.size.12}",  "$type": "dimension" }
+  }
+}

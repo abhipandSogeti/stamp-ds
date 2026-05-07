@@ -1,0 +1,18 @@
+{
+  "space": {
+    "component": {
+      "gap-xs":  { "$value": "{spacing.1}", "$type": "dimension" },
+      "gap-sm":  { "$value": "{spacing.2}", "$type": "dimension" },
+      "gap":     { "$value": "{spacing.4}", "$type": "dimension" },
+      "gap-lg":  { "$value": "{spacing.6}", "$type": "dimension" },
+      "pad-xs":  { "$value": "{spacing.1}", "$type": "dimension" },
+      "pad-sm":  { "$value": "{spacing.2}", "$type": "dimension" },
+      "pad":     { "$value": "{spacing.4}", "$type": "dimension" },
+      "pad-lg":  { "$value": "{spacing.6}", "$type": "dimension" }
+    },
+    "layout": {
+      "section": { "$value": "{spacing.16}", "$type": "dimension" },
+      "page":    { "$value": "{spacing.24}", "$type": "dimension" }
+    }
+  }
+}

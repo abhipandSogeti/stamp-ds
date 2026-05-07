@@ -1,0 +1,28 @@
+{
+  "text": {
+    "display": {
+      "2xl": { "size": { "$value": "{typography.size.40}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.bold}", "$type": "fontWeight" } },
+      "xl":  { "size": { "$value": "{typography.size.32}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.bold}", "$type": "fontWeight" } },
+      "lg":  { "size": { "$value": "{typography.size.28}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.semibold}", "$type": "fontWeight" } }
+    },
+    "heading": {
+      "xl":  { "size": { "$value": "{typography.size.24}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.semibold}", "$type": "fontWeight" } },
+      "lg":  { "size": { "$value": "{typography.size.20}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.semibold}", "$type": "fontWeight" } },
+      "md":  { "size": { "$value": "{typography.size.18}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.semibold}", "$type": "fontWeight" } },
+      "sm":  { "size": { "$value": "{typography.size.16}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.semibold}", "$type": "fontWeight" } }
+    },
+    "body": {
+      "lg":  { "size": { "$value": "{typography.size.18}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.regular}", "$type": "fontWeight" } },
+      "md":  { "size": { "$value": "{typography.size.16}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.regular}", "$type": "fontWeight" } },
+      "sm":  { "size": { "$value": "{typography.size.14}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.regular}", "$type": "fontWeight" } }
+    },
+    "label": {
+      "lg":  { "size": { "$value": "{typography.size.14}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.medium}", "$type": "fontWeight" } },
+      "md":  { "size": { "$value": "{typography.size.13}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.medium}", "$type": "fontWeight" } },
+      "sm":  { "size": { "$value": "{typography.size.12}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.medium}", "$type": "fontWeight" } }
+    },
+    "code": {
+      "md":  { "size": { "$value": "{typography.size.14}", "$type": "dimension" }, "weight": { "$value": "{typography.weight.regular}", "$type": "fontWeight" } }
+    }
+  }
+}
