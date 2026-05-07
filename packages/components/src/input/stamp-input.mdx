@@ -1,0 +1,357 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Components/Input/Usage Guide" />
+
+# Input — Full Usage Guide
+
+`stamp-input` is a text field component that wraps a native `<input>` in a shadow DOM with
+a label, helper text, and error state built in.
+
+---
+
+## Quick reference
+
+| Package | Import |
+|---------|--------|
+| Web Component | `import '@stamp-ds/components/input'` or `import '@stamp-ds/components'` |
+| React | `import { Input } from '@stamp-ds/react'` |
+| Angular | `import { InputDirective } from '@stamp-ds/angular'` — or `StampModule` |
+
+---
+
+## Props / Attributes
+
+| Prop | Type | Default | Reflected as attribute? | Description |
+|------|------|---------|------------------------|-------------|
+| `label` | `string` | `''` | No | Visible label text; also used as `aria-label` if no `<label>` is associated |
+| `placeholder` | `string` | `''` | No | Input placeholder text |
+| `type` | `string` | `'text'` | Yes | Any valid HTML input type |
+| `value` | `string` | `''` | No | Controlled value |
+| `name` | `string` | `''` | Yes | Form field name |
+| `helper` | `string` | `''` | No | Helper text below the input |
+| `error` | `string` | `''` | Yes | Error message; replaces helper text when non-empty |
+| `required` | `boolean` | `false` | Yes | Adds `*` to label; sets `aria-required="true"` |
+| `readonly` | `boolean` | `false` | Yes | Sets `readOnly` on inner `<input>` |
+| `disabled` | `boolean` | `false` | Yes | Prevents all interaction |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Yes | Adjusts padding and font size |
+
+> **`error` is reflected**: you can read and set the error state with `element.getAttribute('error')`
+> or CSS `[error]:not([error=""])` selectors.
+
+---
+
+## Events
+
+### `stamp-input`
+
+```ts
+// CustomEvent detail shape
+interface StampInputDetail {
+  value: string; // current value of the inner <input>
+}
+```
+
+Fired on every keystroke (equivalent to the native `input` event, not `change`).
+
+**Listening in each framework:**
+
+```html
+<!-- Vanilla HTML -->
+<stamp-input id="email" label="Email" type="email"></stamp-input>
+<script>
+  document.getElementById('email').addEventListener('stamp-input', (e) => {
+    console.log(e.detail.value);
+  });
+</script>
+```
+
+```tsx
+// React
+<Input
+  label="Email"
+  type="email"
+  onStampInput={(e) => console.log(e.detail.value)}
+/>
+```
+
+```html
+<!-- Angular template -->
+<stamp-input label="Email" type="email" (stampInput)="onInput($event)"></stamp-input>
+```
+
+```ts
+// Angular component class
+onInput(event: CustomEvent<{ value: string }>) {
+  console.log(event.detail.value);
+}
+```
+
+> **No `stamp-change` event**: unlike native `<input>`, there is no debounced or
+> blur-triggered event. If you need blur, listen to the native `blur` event on the
+> `<stamp-input>` element directly, which bubbles from the internal `<input>`.
+
+---
+
+## Slots
+
+| Slot | Description |
+|------|-------------|
+| `prefix` | Content rendered inside the input on the left (icon, currency symbol, etc.) |
+| `suffix` | Content rendered inside the input on the right (unit label, clear button, etc.) |
+
+```html
+<!-- Prefix: search icon -->
+<stamp-input label="Search">
+  <svg slot="prefix" aria-hidden="true">…</svg>
+</stamp-input>
+
+<!-- Suffix: unit -->
+<stamp-input label="Weight" type="number">
+  <span slot="suffix">kg</span>
+</stamp-input>
+
+<!-- Both prefix and suffix -->
+<stamp-input label="Amount" type="number">
+  <span slot="prefix">€</span>
+  <span slot="suffix">.00</span>
+</stamp-input>
+```
+
+**React slot usage (children with `slot` attribute):**
+
+```tsx
+<Input label="Search">
+  <svg slot="prefix" aria-hidden="true">…</svg>
+</Input>
+```
+
+**Angular slot usage:**
+
+```html
+<stamp-input label="Search">
+  <svg slot="prefix" aria-hidden="true">…</svg>
+</stamp-input>
+```
+
+---
+
+## CSS custom properties
+
+| Property | What it controls |
+|----------|-----------------|
+| `--stamp-input-border-default` | Border colour in default state |
+| `--stamp-input-border-focus` | Border colour when focused |
+| `--stamp-input-border-error` | Border colour when `error` is set |
+| `--stamp-input-radius` | Border radius |
+| `--stamp-input-bg-default` | Background colour |
+| `--stamp-input-bg-disabled` | Background colour when `disabled` |
+| `--stamp-input-padding-x` | Horizontal padding |
+| `--stamp-input-padding-y` | Vertical padding |
+| `--stamp-input-font-size` | Input text font size |
+| `--stamp-input-text-default` | Input text colour |
+| `--stamp-input-text-placeholder` | Placeholder text colour |
+| `--stamp-input-text-disabled` | Text colour when disabled |
+| `--stamp-color-text-primary` | Label text colour |
+| `--stamp-color-text-secondary` | Helper text colour |
+| `--stamp-color-brand-primary-subtle` | Focus ring glow colour |
+| `--stamp-motion-duration-fast` | Focus/hover transition duration |
+| `--stamp-motion-easing-ease-out` | Transition easing |
+
+---
+
+## States
+
+### Default
+
+```html
+<stamp-input label="First name" placeholder="Jane"></stamp-input>
+```
+
+### With helper text
+
+Helper text appears below the input and provides guidance. It's replaced by the error
+message when `error` is set.
+
+```html
+<stamp-input
+  label="Password"
+  type="password"
+  helper="Must be at least 8 characters"
+></stamp-input>
+```
+
+### Error state
+
+Setting a non-empty `error` string:
+- Switches the border to `--stamp-input-border-error` (red)
+- Renders the error message below the input
+- Hides the `helper` text
+- Sets `aria-invalid="true"` and `aria-describedby` pointing to the error element
+
+```html
+<!-- Vanilla -->
+<stamp-input
+  label="Email"
+  type="email"
+  error="Enter a valid email address"
+></stamp-input>
+```
+
+```tsx
+// React — clear error when value is valid
+const [email, setEmail] = useState('');
+const [error, setError] = useState('');
+
+<Input
+  label="Email"
+  type="email"
+  value={email}
+  error={error}
+  onStampInput={(e) => {
+    const val = e.detail.value;
+    setEmail(val);
+    setError(val.includes('@') ? '' : 'Enter a valid email address');
+  }}
+/>
+```
+
+### Required
+
+```html
+<stamp-input label="Email" required></stamp-input>
+```
+
+`required` adds a `*` after the label text and sets `aria-required="true"` on the inner
+`<input>`. It does **not** automatically validate — pair with JS validation logic.
+
+### Readonly
+
+```html
+<stamp-input label="Username" value="janedoe" readonly></stamp-input>
+```
+
+The field is visible and focusable but the user cannot type. The value is still
+submitted with forms.
+
+### Disabled
+
+```html
+<stamp-input label="Username" value="janedoe" disabled></stamp-input>
+```
+
+The field is not focusable, not submitted with forms, and visually dimmed.
+
+---
+
+## Size comparison
+
+| Size | Font size | Padding | Use when |
+|------|-----------|---------|----------|
+| `sm` | `0.75rem` | `4px 8px` | Dense forms, table filter inputs |
+| `md` | `0.875rem` | `8px 12px` | Default — most form contexts |
+| `lg` | `1rem` | `12px 16px` | Prominent search bars, landing page forms |
+
+---
+
+## Supported `type` values
+
+The `type` prop is passed through to the native `<input>`. Common values:
+
+| Type | Notes |
+|------|-------|
+| `text` | Default |
+| `email` | Browser-native email validation; mobile keyboard shows `@` |
+| `password` | Masks characters; browser offers "show password" toggle |
+| `number` | Shows number spinner; set `inputmode="decimal"` for currency |
+| `tel` | Mobile keyboard shows dial pad |
+| `url` | Browser-native URL validation |
+| `search` | May show clear button in some browsers |
+| `date` | Native date picker (appearance varies by browser/OS) |
+| `time` | Native time picker |
+| `datetime-local` | Date + time picker |
+
+> `file`, `range`, `color`, `checkbox`, `radio`, `hidden` — use dedicated Stamp
+> components or native HTML for these.
+
+---
+
+## Controlled vs uncontrolled
+
+### Uncontrolled (simpler — reads value on submit)
+
+```html
+<form id="my-form">
+  <stamp-input label="Name" name="name"></stamp-input>
+  <button type="submit">Submit</button>
+</form>
+<script>
+  document.getElementById('my-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const input = e.target.querySelector('stamp-input');
+    console.log(input.value); // read the Lit property
+  });
+</script>
+```
+
+### Controlled (React)
+
+```tsx
+const [name, setName] = useState('');
+
+<Input
+  label="Name"
+  value={name}
+  onStampInput={(e) => setName(e.detail.value)}
+/>
+```
+
+> **Always pair `value` with `onStampInput`** in React. Setting only `value` without
+> the handler makes the field read-only (the internal value won't update).
+
+### Controlled (Angular — no ngModel)
+
+```html
+<stamp-input
+  label="Name"
+  [value]="name"
+  (stampInput)="name = $event.detail.value"
+></stamp-input>
+```
+
+> `ngModel` is not supported because `stamp-input` does not implement
+> `ControlValueAccessor`. Use the `[value]` + `(stampInput)` pattern above.
+
+---
+
+## Accessibility
+
+- `label` prop generates a `<label>` element linked to the inner `<input>` via `id`/`for`
+- `required` sets `aria-required="true"` on the inner input
+- `error` sets `aria-invalid="true"` and `aria-describedby` pointing to the error element
+- `disabled` sets `aria-disabled` and `tabindex="-1"` on the inner input
+- `readonly` sets `aria-readonly="true"`
+
+**Testing checklist:**
+- [ ] Screen reader announces label when input is focused
+- [ ] Required asterisk is not the only indicator (also `aria-required`)
+- [ ] Error message is announced when it appears (via `aria-describedby`)
+- [ ] Disabled input is not reachable by keyboard
+- [ ] Prefix/suffix icons have `aria-hidden="true"` if decorative
+
+---
+
+## Form integration
+
+```html
+<form action="/register" method="post">
+  <stamp-input label="First name" name="first_name" required></stamp-input>
+  <stamp-input label="Last name" name="last_name" required></stamp-input>
+  <stamp-input label="Email" name="email" type="email" required></stamp-input>
+  <stamp-input label="Password" name="password" type="password" required></stamp-input>
+  <stamp-button type="submit" variant="solid">Create account</stamp-button>
+</form>
+```
+
+> The inner `<input name="...">` is in the shadow DOM. Some older form serialisation
+> libraries that traverse the DOM manually may not see it. Use the `value` Lit property
+> directly or listen to `stamp-input` to maintain your own form state.
