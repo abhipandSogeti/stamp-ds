@@ -1,15 +1,14 @@
 # ─────────────────────────────────────────────────────────────────
-# Chromatic — publishes Storybook and captures visual snapshots.
+# Chromatic — visual regression testing + Storybook deployment.
 #
 # On every PR:
-#   → Builds Storybook, uploads to Chromatic
-#   → Posts a preview URL as a PR status check
-#   → Captures snapshots (compared to baseline in Phase 5)
+#   → Snapshots only the stories affected by changed files (TurboSnap).
+#   → If token/icon files changed, snapshots everything (externals).
+#   → Visual diffs block the PR until a reviewer accepts them in
+#     the Chromatic UI (UI Review required check).
 #
 # On every push to main:
-#   → Same build + upload
-#   → Accepts all changes as the new baseline automatically
-#     (main is always the source of truth)
+#   → Full snapshot run, auto-accepted as the new baseline.
 # ─────────────────────────────────────────────────────────────────
 
 name: Chromatic
@@ -20,25 +19,20 @@ on:
   pull_request:
     branches: ["**"]
 
-# One Chromatic run per branch at a time.
-# On PRs: cancel stale runs (safe — Chromatic will re-run on the next push).
-# On main: don't cancel (we need the baseline to be complete).
 concurrency:
   group: chromatic-${{ github.ref }}
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   chromatic:
-    name: Publish to Chromatic
+    name: Visual Regression
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # Chromatic needs full git history to detect what changed
-          # between this build and the previous baseline.
-          fetch-depth: 0
+          fetch-depth: 0   # full history required for TurboSnap baseline detection
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -62,34 +56,49 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # Build tokens + components first (Storybook depends on them).
-      # Turborepo runs them in order and skips if cached from the CI workflow.
+      # Build tokens + components + icons before Storybook.
+      # --filter=!@stamp-ds/storybook excludes storybook from this step
+      # so we can build it separately with Storybook's own build tool.
       - name: Build packages
         run: pnpm build --filter=!@stamp-ds/storybook
         env:
           TURBO_TELEMETRY_DISABLED: 1
 
-      # Build Storybook static site into apps/storybook/dist/.
-      # We build it here rather than letting Chromatic build it so
-      # that the build happens inside our controlled environment with
-      # all workspace dependencies resolved correctly.
       - name: Build Storybook
         run: pnpm --filter @stamp-ds/storybook build
 
-      # ── THE KEY STEP ─────────────────────────────────────────────
-      # Upload the pre-built Storybook to Chromatic.
-      #
-      # --storybook-build-dir: hand Chromatic the dist/ we just built
-      # --auto-accept-changes "main": on the main branch, treat every
-      #   visual change as accepted → becomes the new baseline.
-      #   This means PRs are always compared against the latest main.
-      # --exit-zero-on-changes: don't fail CI when visuals differ on
-      #   PRs (Phase 5 will tighten this once we have a clean baseline).
-      - name: Publish to Chromatic
+      - name: Run Chromatic
         uses: chromaui/action@latest
         with:
           projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
           storybookBuildDir: apps/storybook/dist
-          autoAcceptChanges: main
-          exitZeroOnChanges: true
+
+          # ── TURBOSNAP ─────────────────────────────────────────────
+          # Only snapshot stories whose JavaScript imports trace back
+          # to a changed file. Much faster than snapshotting everything.
           onlyChanged: true
+
+          # ── EXTERNALS ─────────────────────────────────────────────
+          # Files outside Storybook's JS bundle that still affect how
+          # components look. When these change, TurboSnap bails out and
+          # snapshots every story instead of skipping silently.
+          #
+          # packages/tokens/** — CSS custom properties power all component
+          #   colors, spacing, radii. A token change repaints everything.
+          # packages/icons/dist/** — SVG sprite file; icon components
+          #   reference it at runtime, not via JS imports.
+          externals: |
+            packages/tokens/**
+            packages/icons/dist/**
+
+          # ── BASELINE STRATEGY ─────────────────────────────────────
+          # On main: auto-accept every visual change as the new baseline.
+          # Main is always ground truth. PRs are compared against it.
+          autoAcceptChanges: main
+
+          # ── REMOVED: exitZeroOnChanges ────────────────────────────
+          # Phase 4 had `exitZeroOnChanges: true` so CI never blocked
+          # while we established an initial baseline. That training wheel
+          # is now off. Visual diffs on PRs create a pending "UI Review"
+          # check that blocks merging until a human accepts or denies the
+          # changes in the Chromatic dashboard.
