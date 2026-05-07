@@ -1,0 +1,367 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Components/Checkbox/Usage Guide" />
+
+# Checkbox — Full Usage Guide
+
+`stamp-checkbox` is a tri-state checkbox that supports checked, unchecked, and indeterminate
+states. It wraps a native `<input type="checkbox">` inside a shadow DOM.
+
+---
+
+## Quick reference
+
+| Package | Import |
+|---------|--------|
+| Web Component | `import '@stamp-ds/components/checkbox'` or `import '@stamp-ds/components'` |
+| React | `import { Checkbox } from '@stamp-ds/react'` |
+| Angular | `import { CheckboxDirective } from '@stamp-ds/angular'` — or `StampModule` |
+
+---
+
+## Props / Attributes
+
+| Prop | Type | Default | Reflected as attribute? | Description |
+|------|------|---------|------------------------|-------------|
+| `label` | `string` | `''` | No | Visible label text. When empty, the default slot is rendered instead. |
+| `name` | `string` | `''` | Yes | Form field name |
+| `value` | `string` | `''` | No | Value passed in `e.detail.value` and submitted with forms |
+| `checked` | `boolean` | `false` | Yes | Controlled checked state |
+| `indeterminate` | `boolean` | `false` | No | Tri-state visual; the underlying value remains `false` |
+| `disabled` | `boolean` | `false` | Yes | Prevents all interaction |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Yes | Adjusts checkbox and label size |
+
+> **`checked` is reflected**: the attribute `checked` is present when checked, absent
+> when not. This enables CSS selectors like `stamp-checkbox[checked]`.
+>
+> **`indeterminate` is NOT reflected**: it is a Lit property only. You cannot set it
+> via HTML attribute — always use the property (or the React/Angular binding).
+
+---
+
+## Events
+
+### `stamp-change`
+
+```ts
+// CustomEvent detail shape
+interface StampChangeDetail {
+  checked: boolean; // new checked state after the user's action
+  value: string;    // the 'value' prop at the time of the event
+}
+```
+
+Fired when the user toggles the checkbox (click or Space key).
+
+**Not fired programmatically**: updating `checked` via a prop/attribute does not fire
+`stamp-change`. This matches native `<input type="checkbox">` behaviour.
+
+**Listening in each framework:**
+
+```html
+<!-- Vanilla HTML -->
+<stamp-checkbox id="terms" label="Accept terms" value="accepted"></stamp-checkbox>
+<script>
+  document.getElementById('terms').addEventListener('stamp-change', (e) => {
+    console.log(e.detail.checked); // boolean
+    console.log(e.detail.value);   // 'accepted'
+  });
+</script>
+```
+
+```tsx
+// React
+<Checkbox
+  label="Accept terms"
+  value="accepted"
+  onStampChange={(e) => {
+    console.log(e.detail.checked);
+    console.log(e.detail.value);
+  }}
+/>
+```
+
+```html
+<!-- Angular template -->
+<stamp-checkbox
+  label="Accept terms"
+  value="accepted"
+  (stampChange)="onAccept($event)"
+></stamp-checkbox>
+```
+
+```ts
+// Angular component class
+onAccept(event: CustomEvent<{ checked: boolean; value: string }>) {
+  console.log(event.detail.checked);
+}
+```
+
+---
+
+## Slots
+
+| Slot | Description |
+|------|-------------|
+| *(default)* | Rendered as the label when the `label` prop is empty. Accepts rich HTML. |
+
+```html
+<!-- Plain text label via prop (recommended) -->
+<stamp-checkbox label="Accept terms of service"></stamp-checkbox>
+
+<!-- Rich HTML label via slot -->
+<stamp-checkbox>
+  I agree to the <a href="/terms">Terms of Service</a> and
+  <a href="/privacy">Privacy Policy</a>
+</stamp-checkbox>
+```
+
+> When using the slot, the `label` prop must be empty (its default). Setting both
+> `label` and slot content will show the prop text and ignore the slot.
+
+---
+
+## CSS custom properties
+
+| Property | What it controls |
+|----------|-----------------|
+| `--stamp-color-border-default` | Unchecked border colour |
+| `--stamp-color-brand-primary` | Checked/indeterminate fill colour |
+| `--stamp-color-brand-primary-subtle` | Focus ring glow colour |
+| `--stamp-color-border-focus` | Focus ring border colour |
+| `--stamp-color-surface-elevated` | Checkmark icon colour (white) |
+| `--stamp-radius-xs` | Border radius of the checkbox box |
+| `--stamp-input-font-size` | Label font size |
+| `--stamp-color-text-primary` | Label text colour |
+| `--stamp-space-component-gap-sm` | Gap between box and label |
+| `--stamp-motion-duration-fast` | Check animation duration |
+| `--stamp-motion-easing-ease-out` | Check animation easing |
+
+---
+
+## States
+
+### Unchecked (default)
+
+```html
+<stamp-checkbox label="Subscribe to newsletter"></stamp-checkbox>
+```
+
+### Checked
+
+```html
+<!-- HTML attribute -->
+<stamp-checkbox label="Subscribe" checked></stamp-checkbox>
+```
+
+```tsx
+// React — controlled
+const [checked, setChecked] = useState(true);
+<Checkbox
+  label="Subscribe"
+  checked={checked}
+  onStampChange={(e) => setChecked(e.detail.checked)}
+/>
+```
+
+### Indeterminate
+
+The indeterminate state is **visual only** — the underlying DOM `checked` value is
+`false`, and `e.detail.checked` will be `false` when the user clicks it (toggling it
+to checked). Use it when a parent checkbox represents a mix of checked and unchecked
+children.
+
+```tsx
+// React
+<Checkbox
+  label="Select all"
+  checked={allChecked}
+  indeterminate={someChecked && !allChecked}
+  onStampChange={toggleAll}
+/>
+```
+
+```html
+<!-- Angular -->
+<stamp-checkbox
+  label="Select all"
+  [checked]="allChecked"
+  [indeterminate]="someChecked && !allChecked"
+  (stampChange)="toggleAll()"
+></stamp-checkbox>
+```
+
+> **Cannot set `indeterminate` via HTML attribute.** It is a Lit reactive property only.
+> In vanilla JS, set it via the DOM property: `el.indeterminate = true`.
+
+```js
+// Vanilla JS — must use property, not attribute
+const cb = document.querySelector('stamp-checkbox');
+cb.indeterminate = true; // works
+cb.setAttribute('indeterminate', ''); // does not work
+```
+
+### Disabled
+
+```html
+<stamp-checkbox label="Premium feature" disabled></stamp-checkbox>
+```
+
+Disabled checkbox:
+- Is not focusable (removed from tab order)
+- Does not fire `stamp-change`
+- Is visually dimmed
+- Still reflects checked/unchecked state visually
+
+---
+
+## Select-all pattern (full implementation)
+
+### React
+
+```tsx
+import { useState } from 'react';
+import { Checkbox } from '@stamp-ds/react';
+
+const ITEMS = [
+  { id: 'a', label: 'Apples' },
+  { id: 'b', label: 'Bananas' },
+  { id: 'c', label: 'Cherries' },
+];
+
+export function SelectAll() {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+
+  const allChecked = selected.size === ITEMS.length;
+  const someChecked = selected.size > 0 && !allChecked;
+
+  const toggleAll = () =>
+    setSelected(allChecked ? new Set() : new Set(ITEMS.map((i) => i.id)));
+
+  const toggle = (id: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+
+  return (
+    <fieldset>
+      <legend>Select fruit</legend>
+      <Checkbox
+        label="Select all"
+        checked={allChecked}
+        indeterminate={someChecked}
+        onStampChange={toggleAll}
+      />
+      {ITEMS.map(({ id, label }) => (
+        <Checkbox
+          key={id}
+          label={label}
+          value={id}
+          checked={selected.has(id)}
+          onStampChange={() => toggle(id)}
+        />
+      ))}
+    </fieldset>
+  );
+}
+```
+
+### Angular
+
+```ts
+@Component({
+  template: `
+    <fieldset>
+      <legend>Select fruit</legend>
+      <stamp-checkbox
+        label="Select all"
+        [checked]="allChecked"
+        [indeterminate]="someChecked"
+        (stampChange)="toggleAll()"
+      ></stamp-checkbox>
+      <stamp-checkbox
+        *ngFor="let item of items"
+        [label]="item.label"
+        [value]="item.id"
+        [checked]="selected.has(item.id)"
+        (stampChange)="toggle(item.id)"
+      ></stamp-checkbox>
+    </fieldset>
+  `,
+})
+export class SelectAllComponent {
+  items = [
+    { id: 'a', label: 'Apples' },
+    { id: 'b', label: 'Bananas' },
+    { id: 'c', label: 'Cherries' },
+  ];
+
+  selected = new Set<string>();
+
+  get allChecked() { return this.selected.size === this.items.length; }
+  get someChecked() { return this.selected.size > 0 && !this.allChecked; }
+
+  toggleAll() {
+    if (this.allChecked) {
+      this.selected = new Set();
+    } else {
+      this.selected = new Set(this.items.map((i) => i.id));
+    }
+  }
+
+  toggle(id: string) {
+    const next = new Set(this.selected);
+    next.has(id) ? next.delete(id) : next.add(id);
+    this.selected = next;
+  }
+}
+```
+
+---
+
+## Size comparison
+
+| Size | Box size | Font size | Use when |
+|------|----------|-----------|----------|
+| `sm` | `14px` | `0.75rem` | Dense lists, filter panels |
+| `md` | `16px` | `0.875rem` | Default — most form contexts |
+| `lg` | `20px` | `1rem` | Prominent consent flows, mobile touch targets |
+
+---
+
+## Accessibility
+
+- Wraps a native `<input type="checkbox">` — keyboard toggle (Space) works automatically
+- `indeterminate` sets the DOM property and `aria-checked="mixed"` on the inner input
+- `disabled` removes the element from the tab order
+- `label` prop associates a `<label>` element via `for`/`id` — clicking the label toggles the checkbox
+- Slot content is wrapped in a `<label>` element too, so clicking the text still toggles
+
+**Testing checklist:**
+- [ ] Can toggle with Space key when focused
+- [ ] Tab lands on the checkbox, not on an inner element
+- [ ] Indeterminate state is announced as "mixed" by screen readers
+- [ ] Disabled checkbox is not in tab order
+- [ ] Label text (prop or slot) is associated correctly
+
+---
+
+## Form integration
+
+The inner `<input type="checkbox" name="..." value="...">` lives in the shadow DOM.
+When `checked` is true, the value is submitted with the form.
+
+```html
+<form method="post" action="/preferences">
+  <stamp-checkbox name="newsletter" value="yes" label="Subscribe to newsletter"></stamp-checkbox>
+  <stamp-checkbox name="terms" value="accepted" label="Accept terms" required></stamp-checkbox>
+  <stamp-button type="submit" variant="solid">Save</stamp-button>
+</form>
+```
+
+> **Shadow DOM and form serialisation**: the native `<input>` inside the shadow DOM
+> is form-associated via `ElementInternals` in modern browsers (Chrome 77+, Firefox 93+,
+> Safari 16+). For legacy browser support, read checkbox values from the Lit `checked`
+> property directly and build your own FormData.
