@@ -1,0 +1,22 @@
+{
+  "name": "@stamp-ds/icons",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".":          { "import": "./dist/index.js",  "types": "./dist/index.d.ts" },
+    "./sprite":   "./dist/sprite.svg",
+    "./metadata": "./dist/icons.json"
+  },
+  "scripts": {
+    "build": "node scripts/build-icons.mjs"
+  },
+  "devDependencies": {
+    "svgo": "^3",
+    "typescript": "^5.7"
+  },
+  "dependencies": {
+    "lit": "^3"
+  }
+}
