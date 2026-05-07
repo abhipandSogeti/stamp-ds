@@ -1,0 +1,1 @@
+{"version":3,"file":"stamp-spinner.d.ts","sourceRoot":"","sources":["../../src/spinner/stamp-spinner.ts"],"names":[],"mappings":"AAEA,OAAO,EAAE,YAAY,EAAE,MAAM,yBAAyB,CAAC;AAEvD;;;;;;;;GAQG;AACH,qBACa,YAAa,SAAQ,YAAY;IAC5C,MAAM,CAAC,MAAM,iCAiCX;IAEU,KAAK,SAAa;IAE9B,MAAM;CAgBP;AAED,OAAO,CAAC,MAAM,CAAC;IACb,UAAU,qBAAqB;QAAG,eAAe,EAAE,YAAY,CAAC;KAAE;CACnE"}
