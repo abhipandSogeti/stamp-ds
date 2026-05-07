@@ -1,0 +1,242 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Components/Badge/Usage Guide" />
+
+# Badge — Full Usage Guide
+
+`stamp-badge` is a small, non-interactive label used to communicate status, counts,
+or categorical information at a glance.
+
+---
+
+## Quick reference
+
+| Package | Import |
+|---------|--------|
+| Web Component | `import '@stamp-ds/components/badge'` or `import '@stamp-ds/components'` |
+| React | `import { Badge } from '@stamp-ds/react'` |
+| Angular | `import { BadgeDirective } from '@stamp-ds/angular'` — or `StampModule` |
+
+---
+
+## Props / Attributes
+
+| Prop | Type | Default | Reflected as attribute? | Description |
+|------|------|---------|------------------------|-------------|
+| `variant` | `'neutral' \| 'brand' \| 'danger' \| 'success' \| 'warning'` | `'neutral'` | Yes | Colour scheme |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Yes | Adjusts padding and font size |
+| `live` | `boolean` | `false` | No | Sets `aria-live="polite"` for dynamically updating content |
+
+Badge has **no events** — it is purely presentational.
+
+---
+
+## Slots
+
+| Slot | Description |
+|------|-------------|
+| *(default)* | Badge content — text, number, icon, or any inline HTML |
+
+```html
+<!-- Text -->
+<stamp-badge variant="success">Active</stamp-badge>
+
+<!-- Count -->
+<stamp-badge variant="danger">42</stamp-badge>
+
+<!-- Icon + text -->
+<stamp-badge variant="warning">
+  Review needed
+</stamp-badge>
+```
+
+---
+
+## Variants
+
+| Variant | Background | Text | When to use |
+|---------|-----------|------|-------------|
+| `neutral` | Muted grey | Dark grey | Non-semantic labels, version tags, generic counts |
+| `brand` | Brand blue (subtle) | Brand blue | Featured, highlighted, or "new" items |
+| `success` | Green (subtle) | Green | Completed, approved, active, verified |
+| `warning` | Yellow (subtle) | Amber | Needs attention, pending review, expiring soon |
+| `danger` | Red (subtle) | Red | Error, rejected, overdue, critical |
+
+```html
+<!-- All variants -->
+<stamp-badge variant="neutral">Draft</stamp-badge>
+<stamp-badge variant="brand">New</stamp-badge>
+<stamp-badge variant="success">Active</stamp-badge>
+<stamp-badge variant="warning">Pending</stamp-badge>
+<stamp-badge variant="danger">Overdue</stamp-badge>
+```
+
+---
+
+## Size comparison
+
+| Size | Font size | Padding | Use when |
+|------|-----------|---------|----------|
+| `sm` | `0.625rem` (10px) | `2px 6px` | Inline with dense text, notification dots |
+| `md` | `0.8125rem` (13px) | `2px 8px` | Default — most contexts |
+| `lg` | `0.875rem` (14px) | `4px 10px` | Standalone status indicators, prominent labels |
+
+---
+
+## CSS custom properties
+
+Each variant has its own set of token overrides:
+
+| Property | What it controls |
+|----------|-----------------|
+| `--stamp-badge-neutral-bg` | Neutral background |
+| `--stamp-badge-neutral-text` | Neutral text colour |
+| `--stamp-badge-brand-bg` | Brand background |
+| `--stamp-badge-brand-text` | Brand text colour |
+| `--stamp-badge-danger-bg` | Danger background |
+| `--stamp-badge-danger-text` | Danger text colour |
+| `--stamp-badge-success-bg` | Success background |
+| `--stamp-badge-success-text` | Success text colour |
+| `--stamp-badge-warning-bg` | Warning background |
+| `--stamp-badge-warning-text` | Warning text colour |
+| `--stamp-badge-radius` | Border radius (all variants) |
+| `--stamp-badge-padding-x` | Horizontal padding |
+| `--stamp-badge-padding-y` | Vertical padding |
+| `--stamp-badge-font-size` | Font size |
+| `--stamp-typography-weight-medium` | Font weight |
+
+---
+
+## Usage patterns
+
+### Status badge in a table
+
+```html
+<table>
+  <tr>
+    <td>Invoice #1042</td>
+    <td><stamp-badge variant="success">Paid</stamp-badge></td>
+  </tr>
+  <tr>
+    <td>Invoice #1043</td>
+    <td><stamp-badge variant="warning">Pending</stamp-badge></td>
+  </tr>
+  <tr>
+    <td>Invoice #1044</td>
+    <td><stamp-badge variant="danger">Overdue</stamp-badge></td>
+  </tr>
+</table>
+```
+
+### Notification count (React)
+
+```tsx
+import { Badge } from '@stamp-ds/react';
+
+function NotificationBell({ count }: { count: number }) {
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      <span aria-label="Notifications">🔔</span>
+      {count > 0 && (
+        <Badge
+          variant="danger"
+          size="sm"
+          live={true}
+          style={{
+            position: 'absolute',
+            top: '-4px',
+            right: '-8px',
+            minWidth: '16px',
+            textAlign: 'center',
+          }}
+        >
+          {count > 99 ? '99+' : count}
+        </Badge>
+      )}
+    </div>
+  );
+}
+```
+
+### Dynamic count badge (Angular)
+
+```ts
+@Component({
+  template: `
+    <div class="bell-wrapper">
+      <span aria-label="Notifications">🔔</span>
+      <stamp-badge
+        *ngIf="unreadCount > 0"
+        variant="danger"
+        size="sm"
+        [live]="true"
+      >
+        {{ unreadCount > 99 ? '99+' : unreadCount }}
+      </stamp-badge>
+    </div>
+  `,
+})
+export class NotificationBellComponent {
+  unreadCount = 0;
+}
+```
+
+### Version tag
+
+```html
+<h3>
+  Authentication API
+  <stamp-badge variant="brand" size="sm">v2.0</stamp-badge>
+</h3>
+```
+
+### Feature flag / plan tier
+
+```html
+<span>Advanced export</span>
+<stamp-badge variant="warning" size="sm">Pro</stamp-badge>
+```
+
+---
+
+## `live` prop — screen reader announcements
+
+When badge content changes dynamically (notification count, status update), set
+`live={true}` / `[live]="true"` to add `aria-live="polite"` to the badge element.
+This causes screen readers to announce the new content when it changes.
+
+```tsx
+// React — count updates trigger screen reader announcements
+const [count, setCount] = useState(0);
+
+<Badge variant="danger" live={true}>{count}</Badge>
+```
+
+> Use `live` only when the content changes *after initial render* and the change is
+> meaningful to the user. Do not set `live` on static badges — it causes unnecessary
+> screen reader interruptions.
+
+---
+
+## Accessibility
+
+- Badge has `role="status"` by default (implied by `aria-live="polite"` when `live` is set)
+- Badge content should be concise and self-explanatory in context
+- Do not rely on colour alone to convey meaning — always include text
+
+**Testing checklist:**
+- [ ] Badge text is readable without colour (colourblind simulation)
+- [ ] Dynamic badges with `live={true}` are announced by screen readers when content changes
+- [ ] Badge text has sufficient contrast against background (WCAG AA: 4.5:1)
+- [ ] Decorative badges (pure visual) are not the only way to convey critical state
+
+---
+
+## What Badge is NOT for
+
+| Wrong use | Better alternative |
+|-----------|-------------------|
+| Clickable tag / filter chip | Use a `<button>` styled as a chip |
+| Dismissible label | Use a chip component with a close button |
+| Tooltip trigger | Use a `<button>` with `aria-describedby` |
+| Count inside a Button | Use Button's slot: `<Button>Save <Badge>3</Badge></Button>` |

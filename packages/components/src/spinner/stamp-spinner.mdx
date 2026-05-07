@@ -1,0 +1,232 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Components/Spinner/Usage Guide" />
+
+# Spinner — Full Usage Guide
+
+`stamp-spinner` is an animated loading indicator. It renders an SVG arc animation and
+exposes an accessible label so screen readers can announce what is loading.
+
+---
+
+## Quick reference
+
+| Package | Import |
+|---------|--------|
+| Web Component | `import '@stamp-ds/components/spinner'` or `import '@stamp-ds/components'` |
+| React | `import { Spinner } from '@stamp-ds/react'` |
+| Angular | `import { SpinnerDirective } from '@stamp-ds/angular'` — or `StampModule` |
+
+---
+
+## Props / Attributes
+
+| Prop | Type | Default | Reflected as attribute? | Description |
+|------|------|---------|------------------------|-------------|
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Yes | Adjusts SVG diameter |
+| `label` | `string` | `'Loading'` | No | Sets `aria-label` on the SVG; announced by screen readers |
+
+Spinner has **no events** and **no slots** — it is purely presentational.
+
+---
+
+## Size comparison
+
+| Size | Diameter | Use when |
+|------|----------|----------|
+| `sm` | `16px` | Inline with text, inside compact buttons |
+| `md` | `24px` | Default — most loading states |
+| `lg` | `40px` | Full-section or full-page loading overlays |
+
+---
+
+## CSS custom properties
+
+| Property | What it controls |
+|----------|-----------------|
+| `--stamp-motion-duration-slower` | Rotation animation duration (default: ~1s) |
+| `--stamp-color-brand-primary` | Spinner arc colour (inherited from root by default) |
+
+---
+
+## Usage patterns
+
+### Basic
+
+```html
+<!-- Default: medium, announces "Loading" -->
+<stamp-spinner></stamp-spinner>
+
+<!-- Custom label -->
+<stamp-spinner label="Loading search results"></stamp-spinner>
+
+<!-- Large, contextual label -->
+<stamp-spinner size="lg" label="Fetching your dashboard data"></stamp-spinner>
+```
+
+### Button loading state
+
+Prefer Button's built-in `loading` prop over a manual Spinner inside a Button:
+
+```tsx
+// Correct — uses Button's built-in loading state
+<Button variant="solid" loading={isSaving}>
+  {isSaving ? 'Saving…' : 'Save changes'}
+</Button>
+
+// Avoid — manual spinner in button slot
+<Button variant="solid">
+  {isSaving ? <Spinner size="sm" label="Saving" /> : 'Save changes'}
+</Button>
+```
+
+Button's `loading` prop handles the spinner animation, `aria-busy`, and click suppression
+automatically.
+
+### Section loading state (React)
+
+```tsx
+import { Spinner } from '@stamp-ds/react';
+
+function DataSection({ isLoading, children }: { isLoading: boolean; children: React.ReactNode }) {
+  if (isLoading) {
+    return (
+      <div
+        role="status"
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '0.75rem',
+          padding: '3rem',
+        }}
+      >
+        <Spinner size="lg" label="Loading your data" />
+        <p style={{ color: 'var(--stamp-color-text-secondary)', fontSize: '0.875rem' }}>
+          Loading your data…
+        </p>
+      </div>
+    );
+  }
+  return <>{children}</>;
+}
+```
+
+### Section loading state (Angular)
+
+```ts
+@Component({
+  template: `
+    <ng-container *ngIf="isLoading; else content">
+      <div class="loading-section" role="status">
+        <stamp-spinner size="lg" label="Loading your data"></stamp-spinner>
+        <p class="loading-label">Loading your data…</p>
+      </div>
+    </ng-container>
+    <ng-template #content>
+      <ng-content></ng-content>
+    </ng-template>
+  `,
+  styles: [`
+    .loading-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 3rem;
+      gap: 0.75rem;
+    }
+    .loading-label {
+      color: var(--stamp-color-text-secondary);
+      font-size: 0.875rem;
+    }
+  `],
+})
+export class LoadingSectionComponent {
+  @Input() isLoading = false;
+}
+```
+
+### Full-page overlay
+
+```html
+<div
+  role="dialog"
+  aria-modal="true"
+  aria-label="Processing your request"
+  style="
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+  "
+>
+  <stamp-spinner size="lg" label="Processing your request"></stamp-spinner>
+</div>
+```
+
+### Inline with text
+
+```html
+<p>
+  <stamp-spinner size="sm" label="Checking availability"></stamp-spinner>
+  Checking availability…
+</p>
+```
+
+> When using a Spinner inline with visible text, you can suppress the screen reader
+> announcement by wrapping the spinner with `aria-hidden="true"` and ensuring the
+> surrounding text provides sufficient context:
+>
+> ```html
+> <p>
+>   <stamp-spinner size="sm" style="display:inline" aria-hidden="true"></stamp-spinner>
+>   <span>Checking availability…</span>
+> </p>
+> ```
+
+---
+
+## Accessibility
+
+- The SVG element has `role="status"` and `aria-label` set to the `label` prop value
+- Screen readers announce the label when the spinner appears in the DOM
+- The SVG rotation animation respects `prefers-reduced-motion`:
+  the spin pauses and a static arc is shown when the OS has reduced motion enabled
+
+**Testing checklist:**
+- [ ] Screen reader announces the label when the spinner mounts
+- [ ] With `prefers-reduced-motion: reduce`, the spinner is static (no rotation)
+- [ ] The spinner is not announced repeatedly — it fires once on mount
+- [ ] Spinner is removed from the DOM (not hidden with `display:none`) when loading ends, so screen readers announce the replacement content
+
+---
+
+## When to use Spinner vs Button `loading`
+
+| Situation | Use |
+|-----------|-----|
+| Waiting for a button action to complete | `Button` with `loading={true}` |
+| Loading a section of the page | `Spinner` in a loading container |
+| Full-page processing overlay | `Spinner` in a modal/overlay |
+| Loading individual list items | `Spinner` (size `sm`) inline |
+| Replacing entire page content | `Spinner` (size `lg`) centered |
+
+---
+
+## Customising animation speed
+
+```css
+/* Slow down all spinners on a specific page section */
+.my-slow-section stamp-spinner {
+  --stamp-motion-duration-slower: 2s;
+}
+
+/* Speed up for dense UIs */
+.compact-panel stamp-spinner {
+  --stamp-motion-duration-slower: 0.6s;
+}
+```
