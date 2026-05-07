@@ -1,0 +1,30 @@
+{
+  "name": "@stamp-ds/components",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types":  "./dist/index.d.ts"
+    },
+    "./button":   { "import": "./dist/button/index.js" },
+    "./input":    { "import": "./dist/input/index.js" },
+    "./checkbox": { "import": "./dist/checkbox/index.js" },
+    "./badge":    { "import": "./dist/badge/index.js" },
+    "./spinner":  { "import": "./dist/spinner/index.js" }
+  },
+  "scripts": {
+    "build":      "tsc --project tsconfig.json",
+    "dev":        "tsc --project tsconfig.json --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stamp-ds/tokens": "workspace:*",
+    "lit": "^3"
+  },
+  "devDependencies": {
+    "typescript": "^5.7"
+  }
+}
