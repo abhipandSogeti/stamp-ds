@@ -1,0 +1,95 @@
+# ─────────────────────────────────────────────────────────────────
+# Chromatic — publishes Storybook and captures visual snapshots.
+#
+# On every PR:
+#   → Builds Storybook, uploads to Chromatic
+#   → Posts a preview URL as a PR status check
+#   → Captures snapshots (compared to baseline in Phase 5)
+#
+# On every push to main:
+#   → Same build + upload
+#   → Accepts all changes as the new baseline automatically
+#     (main is always the source of truth)
+# ─────────────────────────────────────────────────────────────────
+
+name: Chromatic
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ["**"]
+
+# One Chromatic run per branch at a time.
+# On PRs: cancel stale runs (safe — Chromatic will re-run on the next push).
+# On main: don't cancel (we need the baseline to be complete).
+concurrency:
+  group: chromatic-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  chromatic:
+    name: Publish to Chromatic
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Chromatic needs full git history to detect what changed
+          # between this build and the previous baseline.
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: ~/.turbo
+          key: turbo-${{ runner.os }}-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Build tokens + components first (Storybook depends on them).
+      # Turborepo runs them in order and skips if cached from the CI workflow.
+      - name: Build packages
+        run: pnpm build --filter=!@stamp-ds/storybook
+        env:
+          TURBO_TELEMETRY_DISABLED: 1
+
+      # Build Storybook static site into apps/storybook/dist/.
+      # We build it here rather than letting Chromatic build it so
+      # that the build happens inside our controlled environment with
+      # all workspace dependencies resolved correctly.
+      - name: Build Storybook
+        run: pnpm --filter @stamp-ds/storybook build
+
+      # ── THE KEY STEP ─────────────────────────────────────────────
+      # Upload the pre-built Storybook to Chromatic.
+      #
+      # --storybook-build-dir: hand Chromatic the dist/ we just built
+      # --auto-accept-changes "main": on the main branch, treat every
+      #   visual change as accepted → becomes the new baseline.
+      #   This means PRs are always compared against the latest main.
+      # --exit-zero-on-changes: don't fail CI when visuals differ on
+      #   PRs (Phase 5 will tighten this once we have a clean baseline).
+      - name: Publish to Chromatic
+        uses: chromaui/action@latest
+        with:
+          projectToken: ${{ secrets.CHROMATIC_PROJECT_TOKEN }}
+          storybookBuildDir: apps/storybook/dist
+          autoAcceptChanges: main
+          exitZeroOnChanges: true
+          onlyChanged: true
