@@ -1,0 +1,8 @@
+{
+  "opacity": {
+    "disabled": { "$value": 0.38, "$type": "number" },
+    "muted":    { "$value": 0.6,  "$type": "number" },
+    "overlay":  { "$value": 0.72, "$type": "number" },
+    "full":     { "$value": 1,    "$type": "number" }
+  }
+}
