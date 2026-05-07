@@ -1,0 +1,914 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Stamp DS / React" />
+
+# Using Stamp DS in React
+
+`@stamp-ds/react` wraps every Stamp Web Component in a fully-typed React component using
+[`@lit-labs/react`](https://www.npmjs.com/package/@lit-labs/react). You get:
+
+- Typed `props` instead of HTML attributes
+- `on*` callback props instead of `addEventListener`
+- Forwarded `ref`s to the underlying DOM element
+- Zero additional runtime — the Web Component handles all rendering
+
+---
+
+## Prerequisites
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Requirement</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Version</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>React</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>≥ 18</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Node.js</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>≥ 18</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Bundler</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Vite, Webpack 5, Rollup, or esbuild (ESM support required)</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>TypeScript</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>≥ 5 (optional but strongly recommended)</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Installation
+
+```bash
+# npm
+npm install @stamp-ds/tokens @stamp-ds/components @stamp-ds/react
+
+# pnpm
+pnpm add @stamp-ds/tokens @stamp-ds/components @stamp-ds/react
+
+# yarn
+yarn add @stamp-ds/tokens @stamp-ds/components @stamp-ds/react
+```
+
+**What each package does:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Package</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/tokens</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>CSS custom properties (colours, spacing, typography, motion)</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/components</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Lit Web Components — defines <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-*&gt;</code> custom elements</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/react</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Thin React wrappers with typed props and event callbacks</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## One-time setup
+
+Do this **once** at your application entry point — not in every component file.
+
+### Vite / CRA / most bundlers
+
+```tsx
+// src/main.tsx  (or src/index.tsx)
+
+// 1. Load CSS design tokens — must come before any component renders
+import '@stamp-ds/tokens/dist/css/tokens.css';
+
+// 2. Register all <stamp-*> custom elements in the browser's registry
+//    Side-effect-only import — no exports to use
+import '@stamp-ds/components';
+
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './App';
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
+```
+
+> **Why import order matters**: the token CSS must load before components render,
+> otherwise components briefly flash unstyled. Bundlers preserve import order within
+> a single file, so keep both imports in the same entry file.
+
+### Next.js — App Router
+
+Web Components require a browser environment. Mark every file that uses Stamp components
+with `'use client'` at the top:
+
+```tsx
+// app/layout.tsx — load tokens globally (server-safe, it's just CSS)
+import '@stamp-ds/tokens/dist/css/tokens.css';
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en">
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+```tsx
+// app/components/SubmitButton.tsx
+'use client'; // ← required: Web Components are browser-only
+
+import '@stamp-ds/components'; // registers custom elements client-side
+import { Button } from '@stamp-ds/react';
+
+export function SubmitButton() {
+  return <Button variant="solid">Submit</Button>;
+}
+```
+
+> **SSR note**: `@stamp-ds/components` must NOT be imported in a Server Component.
+> Put it inside a `'use client'` file, or use dynamic import with `{ ssr: false }`.
+
+### Next.js — Pages Router
+
+```tsx
+// pages/_app.tsx
+import '@stamp-ds/tokens/dist/css/tokens.css'; // global CSS, fine on server
+import type { AppProps } from 'next/app';
+
+export default function App({ Component, pageProps }: AppProps) {
+  return <Component {...pageProps} />;
+}
+```
+
+For individual pages, dynamic-import to skip SSR:
+
+```tsx
+// pages/dashboard.tsx
+import dynamic from 'next/dynamic';
+
+// Suspense boundary is required when ssr: false
+const Button = dynamic(
+  () => import('@stamp-ds/react').then((m) => m.Button),
+  { ssr: false }
+);
+
+export default function Dashboard() {
+  return <Button variant="solid">Go</Button>;
+}
+```
+
+### Vite config — optional alias
+
+If your bundler can't resolve the bare `@stamp-ds/tokens/css` shorthand, add an alias:
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  resolve: {
+    alias: {
+      '@stamp-ds/tokens/css': '@stamp-ds/tokens/dist/css/tokens.css',
+    },
+  },
+});
+```
+
+---
+
+## Event naming
+
+Stamp Web Components fire `CustomEvent`s on the element. The React wrappers map these
+to callback props using the `onStamp*` prefix, avoiding conflicts with React's own
+synthetic events (`onClick`, `onChange`, etc.):
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>DOM <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>CustomEvent</code></th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>React prop</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Fired when</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>stamp-click</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampClick</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Button is clicked (not fired when <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>disabled</code> or <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>loading</code>)</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>stamp-input</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampInput</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Input value changes on every keystroke</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>stamp-change</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampChange</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Checkbox checked state changes</td>
+    </tr>
+  </tbody>
+</table>
+
+> **Why `onStampClick` and not `onClick`?**
+> React's `onClick` fires on the host element — including clicks on the internal
+> shadow-DOM spinner or focus ring. `onStampClick` only fires when the component's
+> internal logic decides a "real" click happened (e.g. not when `loading` is true).
+
+---
+
+## Components
+
+### Button
+
+```tsx
+import { Button } from '@stamp-ds/react';
+
+// Minimal
+<Button>Save</Button>
+
+// All props
+<Button
+  variant="solid"          // 'solid' | 'outline' | 'ghost' | 'danger'  — default: 'solid'
+  size="md"                // 'sm' | 'md' | 'lg'                          — default: 'md'
+  type="button"            // 'button' | 'submit' | 'reset'               — default: 'button'
+  disabled={false}         // boolean                                      — default: false
+  loading={false}          // boolean — shows spinner, blocks clicks       — default: false
+  label=""                 // string — sets aria-label for icon-only use   — default: ''
+  onStampClick={(e) => {   // CustomEvent<{ originalEvent: MouseEvent }>
+    console.log(e.detail.originalEvent);
+  }}
+>
+  Click me
+</Button>
+```
+
+**Variant guidance:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Variant</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>When to use</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>solid</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Primary CTA. One per view.</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>outline</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Secondary action alongside a solid button.</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>ghost</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Low-emphasis action (e.g. Cancel, Learn more).</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>danger</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Destructive actions (delete, remove). Always confirm intent first.</td>
+    </tr>
+  </tbody>
+</table>
+
+**`loading` state details:**
+- Replaces button content with a spinner visually
+- Sets `aria-busy="true"` internally
+- Suppresses `stamp-click` events — safe to keep the button enabled while a request is in flight
+- Does **not** set `disabled` — tab focus is maintained
+
+**Icon-only buttons (accessibility):**
+```tsx
+// Wrong — no accessible name
+<Button variant="ghost">Delete</Button>
+
+// Correct — label prop sets aria-label on the inner <button>
+<Button variant="ghost" label="Delete item">Delete</Button>
+```
+
+**Form submission:**
+```tsx
+// type="submit" submits the nearest <form> element
+<form onSubmit={handleSubmit}>
+  <Input label="Name" name="name" />
+  <Button type="submit" variant="solid">Submit</Button>
+</form>
+```
+
+---
+
+### Input
+
+```tsx
+import { Input } from '@stamp-ds/react';
+
+// Minimal
+<Input label="Email" />
+
+// All props
+<Input
+  label="Email address"    // string — visible label text             — default: ''
+  placeholder="you@example.com"  // string                           — default: ''
+  type="email"             // string — any valid HTML input type      — default: 'text'
+  value=""                 // string — controlled value               — default: ''
+  name=""                  // string — form field name                — default: ''
+  helper="We'll never share your email"  // string — helper text below input  — default: ''
+  error=""                 // string — error message (replaces helper) — default: ''
+  required={false}         // boolean — adds * to label, aria-required  — default: false
+  readonly={false}         // boolean                                  — default: false
+  disabled={false}         // boolean                                  — default: false
+  size="md"                // 'sm' | 'md' | 'lg'                      — default: 'md'
+  onStampInput={(e) => {   // CustomEvent<{ value: string }>
+    console.log(e.detail.value);
+  }}
+/>
+```
+
+**Controlled input pattern (React):**
+
+`stamp-input` doesn't behave like a native `<input>` — it's a Web Component with an
+internal shadow DOM. To make it fully controlled in React:
+
+```tsx
+import { useState } from 'react';
+import { Input } from '@stamp-ds/react';
+
+function ControlledEmail() {
+  const [email, setEmail] = useState('');
+
+  return (
+    <Input
+      label="Email"
+      type="email"
+      value={email}
+      onStampInput={(e) => setEmail(e.detail.value)}
+    />
+  );
+}
+```
+
+> **Important**: Unlike native `<input>`, the `onStampInput` event fires on every
+> keystroke (equivalent to `onInput`, not `onChange`). There is no `onStampChange`
+> for Input — use `onStampInput` for all value tracking.
+
+**Error state:**
+```tsx
+const [error, setError] = useState('');
+
+<Input
+  label="Email"
+  type="email"
+  value={email}
+  error={error}           // non-empty string shows error styling + message
+  onStampInput={(e) => {
+    const val = e.detail.value;
+    setEmail(val);
+    setError(val.includes('@') ? '' : 'Enter a valid email address');
+  }}
+/>
+```
+
+**Prefix/suffix slots:**
+
+React wrappers expose slots as `slot="prefix"` / `slot="suffix"` children:
+
+```tsx
+<Input label="Search">
+  <svg slot="prefix" aria-hidden="true">…</svg>
+</Input>
+
+<Input label="Amount" type="number">
+  <span slot="prefix">€</span>
+  <span slot="suffix">.00</span>
+</Input>
+```
+
+**Supported `type` values:**
+`text`, `email`, `password`, `number`, `tel`, `url`, `search`, `date`, `time`, `datetime-local`
+
+> The component passes `type` directly to the inner `<input>` element, so any valid
+> HTML input type works. However, complex types like `file`, `range`, and `color` are
+> not recommended — use dedicated components for those.
+
+---
+
+### Checkbox
+
+```tsx
+import { Checkbox } from '@stamp-ds/react';
+
+// Minimal
+<Checkbox label="Accept terms" />
+
+// All props
+<Checkbox
+  label="Accept terms"     // string — visible label text             — default: ''
+  name=""                  // string — form field name                — default: ''
+  value=""                 // string — value submitted with the form  — default: ''
+  checked={false}          // boolean — controlled checked state      — default: false
+  indeterminate={false}    // boolean — tri-state (neither checked nor unchecked) — default: false
+  disabled={false}         // boolean                                  — default: false
+  size="md"                // 'sm' | 'md' | 'lg'                      — default: 'md'
+  onStampChange={(e) => {  // CustomEvent<{ checked: boolean; value: string }>
+    console.log(e.detail.checked, e.detail.value);
+  }}
+/>
+```
+
+**Controlled checkbox:**
+```tsx
+import { useState } from 'react';
+import { Checkbox } from '@stamp-ds/react';
+
+function TermsCheckbox() {
+  const [accepted, setAccepted] = useState(false);
+
+  return (
+    <Checkbox
+      label="I accept the terms of service"
+      checked={accepted}
+      onStampChange={(e) => setAccepted(e.detail.checked)}
+    />
+  );
+}
+```
+
+**Indeterminate state (select-all pattern):**
+
+`indeterminate` is a visual-only state — the underlying value is still `false`.
+Use it when a parent checkbox represents a partially-selected group:
+
+```tsx
+import { useState } from 'react';
+import { Checkbox } from '@stamp-ds/react';
+
+const items = ['Apples', 'Bananas', 'Cherries'];
+
+function SelectAll() {
+  const [selected, setSelected] = useState<string[]>([]);
+
+  const allChecked = selected.length === items.length;
+  const someChecked = selected.length > 0 && !allChecked;
+
+  const toggleAll = () =>
+    setSelected(allChecked ? [] : items);
+
+  const toggle = (item: string) =>
+    setSelected((prev) =>
+      prev.includes(item) ? prev.filter((i) => i !== item) : [...prev, item]
+    );
+
+  return (
+    <div>
+      <Checkbox
+        label="Select all"
+        checked={allChecked}
+        indeterminate={someChecked}
+        onStampChange={toggleAll}
+      />
+      {items.map((item) => (
+        <Checkbox
+          key={item}
+          label={item}
+          value={item}
+          checked={selected.includes(item)}
+          onStampChange={() => toggle(item)}
+        />
+      ))}
+    </div>
+  );
+}
+```
+
+**Custom label content (slot):**
+
+When `label` prop is empty, the default slot is rendered instead:
+
+```tsx
+<Checkbox>
+  I agree to the <a href="/terms">Terms of Service</a>
+</Checkbox>
+```
+
+---
+
+### Badge
+
+```tsx
+import { Badge } from '@stamp-ds/react';
+
+// Minimal
+<Badge>New</Badge>
+
+// All props
+<Badge
+  variant="neutral"        // 'neutral' | 'brand' | 'danger' | 'success' | 'warning' — default: 'neutral'
+  size="md"                // 'sm' | 'md' | 'lg'                                       — default: 'md'
+  live={false}             // boolean — sets aria-live="polite" for dynamic content     — default: false
+>
+  3 items
+</Badge>
+```
+
+**Variant semantics:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Variant</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Use case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>neutral</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Non-semantic labels, counts, tags</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>brand</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Highlighted or featured items</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>success</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Completed, approved, active states</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>warning</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Needs attention, pending review</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>danger</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Error state, rejected, overdue</td>
+    </tr>
+  </tbody>
+</table>
+
+**`live` prop for dynamic content:**
+
+When badge content updates dynamically (e.g. a notification count), set `live={true}`
+so screen readers announce the change:
+
+```tsx
+<Badge variant="danger" live={true}>
+  {unreadCount}
+</Badge>
+```
+
+> Badge has no event output — it is purely presentational.
+
+---
+
+### Spinner
+
+```tsx
+import { Spinner } from '@stamp-ds/react';
+
+// Minimal — announces "Loading" to screen readers
+<Spinner />
+
+// All props
+<Spinner
+  size="md"                // 'sm' | 'md' | 'lg'  — default: 'md'
+  label="Saving changes"   // string — aria-label for screen readers — default: 'Loading'
+/>
+```
+
+**Always set `label` when the spinner context isn't obvious:**
+
+```tsx
+// Bad — screen readers say "Loading" with no context
+<Spinner />
+
+// Good — describes what is loading
+<Spinner label="Loading search results" />
+<Spinner label="Saving your preferences" />
+```
+
+**Inline loading pattern:**
+
+```tsx
+import { Button, Spinner } from '@stamp-ds/react';
+
+function SaveButton({ isSaving }: { isSaving: boolean }) {
+  return (
+    // Use Button's built-in loading prop rather than a manual Spinner
+    <Button variant="solid" loading={isSaving}>
+      {isSaving ? 'Saving…' : 'Save changes'}
+    </Button>
+  );
+}
+
+// Spinner is better for full-section loading states
+function DataSection({ isLoading, data }: { isLoading: boolean; data: string[] }) {
+  if (isLoading) {
+    return (
+      <div role="status" style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+        <Spinner label="Loading data" size="lg" />
+      </div>
+    );
+  }
+  return <ul>{data.map((item) => <li key={item}>{item}</li>)}</ul>;
+}
+```
+
+> `Spinner` has no event outputs — it is purely presentational.
+
+---
+
+## TypeScript
+
+All components and event types are fully exported from `@stamp-ds/react`:
+
+```tsx
+import type {
+  StampClickEvent,
+  StampInputEvent,
+  StampChangeEvent,
+} from '@stamp-ds/react';
+
+// Event handler with explicit type
+function handleClick(e: StampClickEvent) {
+  // e.detail.originalEvent is typed as MouseEvent
+  console.log(e.detail.originalEvent.clientX);
+}
+
+function handleInput(e: StampInputEvent) {
+  // e.detail.value is typed as string
+  const value: string = e.detail.value;
+}
+
+function handleChange(e: StampChangeEvent) {
+  // e.detail.checked is boolean, e.detail.value is string
+  const { checked, value } = e.detail;
+}
+```
+
+**Variant union types:**
+
+```tsx
+import type { ButtonVariant, BadgeVariant } from '@stamp-ds/react';
+
+// Use these when building wrapper components
+interface MyButtonProps {
+  intent: ButtonVariant; // 'solid' | 'outline' | 'ghost' | 'danger'
+}
+```
+
+---
+
+## Refs
+
+React wrappers forward refs to the underlying Web Component DOM element:
+
+```tsx
+import { useRef, useEffect } from 'react';
+import { Input } from '@stamp-ds/react';
+
+function AutoFocusSearch() {
+  const ref = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    // Focus the internal input inside the shadow DOM
+    ref.current?.focus();
+  }, []);
+
+  return <Input ref={ref} label="Search" />;
+}
+```
+
+> The ref points to the `<stamp-input>` custom element, not the inner `<input>`.
+> Calling `.focus()` on it delegates to the shadow-DOM input automatically.
+
+---
+
+## Dark mode
+
+Swap the token stylesheet at runtime. This affects all Stamp components site-wide:
+
+```tsx
+// src/hooks/useTheme.ts
+import { useState, useCallback } from 'react';
+
+export function useTheme() {
+  const [isDark, setIsDark] = useState(false);
+
+  const toggle = useCallback(() => {
+    const link = document.getElementById('stamp-tokens') as HTMLLinkElement;
+    if (!link) return;
+    link.href = isDark
+      ? '/node_modules/@stamp-ds/tokens/dist/css/tokens.css'
+      : '/node_modules/@stamp-ds/tokens/dist/css/tokens.dark.css';
+    setIsDark((d) => !d);
+  }, [isDark]);
+
+  return { isDark, toggle };
+}
+```
+
+```tsx
+// src/main.tsx — use a <link> tag instead of a CSS import so we can swap it
+// Remove the static import and add a <link> in your HTML:
+// <link id="stamp-tokens" rel="stylesheet" href="..." />
+```
+
+See [Theming](?path=/docs/stamp-ds-theming--docs) for the full dark-mode guide.
+
+---
+
+## Theming / token overrides
+
+Override CSS custom properties after the token stylesheet to restyle components:
+
+```css
+/* src/brand-overrides.css — import after @stamp-ds/tokens/dist/css/tokens.css */
+:root {
+  /* Change brand colour */
+  --stamp-color-brand-primary: #7C3AED;
+
+  /* Make all buttons pill-shaped */
+  --stamp-button-radius: 9999px;
+
+  /* Restyle a single Input instance via inline style or a CSS class */
+}
+```
+
+Scoped override for a single component:
+
+```tsx
+<Button
+  style={{ '--stamp-button-bg': '#7C3AED', '--stamp-button-radius': '9999px' } as React.CSSProperties}
+>
+  Custom brand
+</Button>
+```
+
+---
+
+## Common patterns
+
+### Form with validation
+
+```tsx
+import { useState } from 'react';
+import { Input, Checkbox, Button } from '@stamp-ds/react';
+
+interface FormState {
+  email: string;
+  password: string;
+  remember: boolean;
+}
+
+interface Errors {
+  email?: string;
+  password?: string;
+}
+
+export function LoginForm() {
+  const [form, setForm] = useState<FormState>({ email: '', password: '', remember: false });
+  const [errors, setErrors] = useState<Errors>({});
+  const [loading, setLoading] = useState(false);
+
+  const validate = (): boolean => {
+    const next: Errors = {};
+    if (!form.email.includes('@')) next.email = 'Enter a valid email address';
+    if (form.password.length < 8) next.password = 'Password must be at least 8 characters';
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate()) return;
+    setLoading(true);
+    try {
+      await submitLogin(form);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={(e) => e.preventDefault()}>
+      <Input
+        label="Email address"
+        type="email"
+        value={form.email}
+        error={errors.email}
+        required
+        onStampInput={(e) => setForm((f) => ({ ...f, email: e.detail.value }))}
+      />
+      <Input
+        label="Password"
+        type="password"
+        value={form.password}
+        error={errors.password}
+        required
+        onStampInput={(e) => setForm((f) => ({ ...f, password: e.detail.value }))}
+      />
+      <Checkbox
+        label="Remember me"
+        checked={form.remember}
+        onStampChange={(e) => setForm((f) => ({ ...f, remember: e.detail.checked }))}
+      />
+      <Button type="submit" variant="solid" loading={loading} onStampClick={handleSubmit}>
+        Sign in
+      </Button>
+    </form>
+  );
+}
+```
+
+### Notification badge
+
+```tsx
+import { Badge } from '@stamp-ds/react';
+
+function NotificationBell({ count }: { count: number }) {
+  return (
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      🔔
+      {count > 0 && (
+        <Badge
+          variant="danger"
+          size="sm"
+          live={true}
+          style={{ position: 'absolute', top: '-4px', right: '-8px' }}
+        >
+          {count > 99 ? '99+' : count}
+        </Badge>
+      )}
+    </div>
+  );
+}
+```
+
+---
+
+## Gotchas
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Situation</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>What happens</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Forgot <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>import '@stamp-ds/components'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Components render as unknown elements with no styles</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Add the side-effect import to your entry point</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Forgot <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>import '@stamp-ds/tokens/dist/css/tokens.css'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Components render but with no colour/spacing — all CSS vars are <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>undefined</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Add the CSS import before any component renders</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Using <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onChange</code> instead of <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampChange</code> on Checkbox</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>React fires on the host element's DOM change event, which bubbles differently</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Always use <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampChange</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Using <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onClick</code> on Button</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Fires on raw clicks including on disabled/loading states</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Always use <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampClick</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>SSR (Next.js App Router) without <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'use client'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Hydration error: custom elements are not registered server-side</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Add <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'use client'</code> to any file importing <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/react</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Controlled <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>Input</code> with no <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampInput</code> handler</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Value prop is ignored — the component stays uncontrolled</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Always pair <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>value</code> with <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>onStampInput</code></td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Setting <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>indeterminate</code> on Checkbox via <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>ref.current.indeterminate</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Won't work — it's a Lit reactive property, not a DOM property</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Pass <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>indeterminate={'{true}'}</code> as a prop</td>
+    </tr>
+  </tbody>
+</table>

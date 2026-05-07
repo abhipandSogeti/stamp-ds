@@ -1,0 +1,376 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Stamp DS / Contributing" />
+
+# Contributing
+
+This guide covers contributing a new component, adding tokens, writing stories, and shipping
+a release. All contributions must pass the quality bar below before merging.
+
+---
+
+## Quality bar (non-negotiable)
+
+Every component that ships in Stamp must meet all of the following:
+
+- [ ] WCAG 2.2 AA — zero axe-core violations at the `serious` or `critical` level
+- [ ] Keyboard navigable — Tab, Enter, Space, Escape, Arrow keys as appropriate
+- [ ] `disabled` reflected as HTML attribute so `[disabled]` CSS selectors work
+- [ ] All interactive states handled: default, hover, focus, active, disabled, loading
+- [ ] Stories for: Playground, all variants, all sizes, all states, A11y Check
+- [ ] `tags: ['autodocs']` set in story meta
+- [ ] React wrapper exported from `@stamp-ds/react`
+- [ ] Angular directive exported from `@stamp-ds/angular`
+- [ ] Changeset file created before opening PR
+
+---
+
+## Adding a new component
+
+Follow these steps in order. Each step produces an artefact the next step depends on.
+
+### 1. Define component tokens
+
+Add a file at `packages/tokens/src/component/{name}.json`:
+
+```json
+{
+  "name": {
+    "bg": { "value": "{color.brand.primary}", "type": "color" },
+    "bg-hover": { "value": "{color.brand.primary-hover}", "type": "color" },
+    "text": { "value": "{color.brand.primary-text}", "type": "color" },
+    "radius": { "value": "{radius.md}", "type": "borderRadius" },
+    "padding-x": { "value": "{spacing.4}", "type": "spacing" },
+    "padding-y": { "value": "{spacing.2}", "type": "spacing" }
+  }
+}
+```
+
+Build tokens to verify output:
+
+```bash
+pnpm --filter @stamp-ds/tokens build
+```
+
+### 2. Implement the Lit Web Component
+
+Create `packages/components/src/{name}/` with:
+
+```
+{name}/
+├── stamp-{name}.ts       Component class
+├── stamp-{name}.css.ts   CSS tagged template (imported by the class)
+├── index.ts              Named re-export
+└── stamp-{name}.stories.ts  Storybook stories
+```
+
+**Component class skeleton** (`stamp-{name}.ts`):
+
+```ts
+import { LitElement, html } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
+import { styles } from './stamp-{name}.css.js';
+
+@customElement('stamp-{name}')
+export class Stamp{Name} extends LitElement {
+  static override styles = styles;
+
+  @property({ reflect: true }) variant: 'primary' | 'secondary' = 'primary';
+  @property({ type: Boolean, reflect: true }) disabled = false;
+
+  override render() {
+    return html`
+      <div
+        part="root"
+        class="stamp-{name} stamp-{name}--${this.variant}"
+        aria-disabled=${this.disabled}
+      >
+        <slot></slot>
+      </div>
+    `;
+  }
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'stamp-{name}': Stamp{Name};
+  }
+}
+```
+
+**CSS template** (`stamp-{name}.css.ts`):
+
+```ts
+import { css } from 'lit';
+
+export const styles = css`
+  :host {
+    display: inline-block;
+  }
+
+  .stamp-{name} {
+    background: var(--stamp-{name}-bg);
+    color: var(--stamp-{name}-text);
+    border-radius: var(--stamp-{name}-radius);
+    padding: var(--stamp-{name}-padding-y) var(--stamp-{name}-padding-x);
+
+    /* Motion */
+    transition:
+      background var(--stamp-duration-fast) var(--stamp-easing-standard),
+      box-shadow var(--stamp-duration-fast) var(--stamp-easing-standard);
+  }
+
+  :host([disabled]) .stamp-{name} {
+    opacity: var(--stamp-opacity-disabled, 0.5);
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+`;
+```
+
+### 3. Export from the package barrel
+
+Add to `packages/components/src/index.ts`:
+
+```ts
+export * from './{name}/index.js';
+```
+
+### 4. Add a React wrapper
+
+In `packages/react/src/index.ts`:
+
+```ts
+import { createComponent } from '@lit-labs/react';
+import React from 'react';
+import { Stamp{Name} } from '@stamp-ds/components/{name}';
+
+export const {Name} = createComponent({
+  tagName: 'stamp-{name}',
+  elementClass: Stamp{Name},
+  react: React,
+  events: {
+    onStamp{Name}Click: 'stamp-click',
+    onStamp{Name}Change: 'stamp-change',
+  },
+});
+```
+
+### 5. Add an Angular directive
+
+Create `packages/angular/src/directives/{name}.directive.ts`:
+
+```ts
+import {
+  Directive,
+  Input,
+  Output,
+  EventEmitter,
+  HostListener,
+} from '@angular/core';
+
+@Directive({ selector: 'stamp-{name}' })
+export class Stamp{Name}Directive {
+  @Input() variant: string = 'primary';
+  @Input() disabled: boolean = false;
+
+  @Output() stamp{Name}Click = new EventEmitter<CustomEvent>();
+
+  @HostListener('stamp-click', ['$event'])
+  onStampClick(event: CustomEvent) {
+    this.stamp{Name}Click.emit(event);
+  }
+}
+```
+
+Add it to `StampModule` in `packages/angular/src/stamp.module.ts`.
+
+### 6. Write Storybook stories
+
+Minimum story set (see [Button stories](https://github.com/your-org/stamp-ds/blob/main/packages/components/src/button/stamp-button.stories.ts) as reference):
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Story</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>Playground</code></td>
+      <td style={{ padding: '10px 12px' }}>All controls live; used for interactive exploration</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>All Variants</code></td>
+      <td style={{ padding: '10px 12px' }}>Static showcase; controls disabled</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>All Sizes</code></td>
+      <td style={{ padding: '10px 12px' }}>Visual regression baseline for sizes</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>States</code></td>
+      <td style={{ padding: '10px 12px' }}>Hover, focus, disabled, loading</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>A11y Check</code></td>
+      <td style={{ padding: '10px 12px' }}>Icon-only, loading, disabled — verify axe-core passes</td>
+    </tr>
+  </tbody>
+</table>
+
+Story meta must include:
+
+```ts
+const meta: Meta<Stamp{Name}> = {
+  title: 'Components/{Name}',
+  component: 'stamp-{name}' as unknown as typeof Stamp{Name},
+  tags: ['autodocs'],   // required — generates the Docs page
+  argTypes: { /* ... */ },
+  parameters: {
+    docs: {
+      description: {
+        component: `Describe the component purpose and when to use each variant.`,
+      },
+    },
+  },
+};
+```
+
+### 7. Verify everything passes
+
+```bash
+# Build tokens + components
+pnpm build
+
+# Type-check all packages
+pnpm type-check
+
+# Run Storybook locally and check the Accessibility panel
+cd apps/storybook && pnpm dev
+```
+
+Open every new story and confirm:
+
+- Controls panel populates correctly
+- Docs page renders at `Components/{Name}` → Docs
+- Accessibility panel shows zero critical/serious violations
+- Dark mode toggle works (light / dark toolbar)
+
+---
+
+## Adding or modifying a token
+
+Token changes flow through all tiers. Follow the tier rules strictly.
+
+### Adding a primitive token
+
+Edit the relevant file under `packages/tokens/src/primitive/`:
+
+```json
+// packages/tokens/src/primitive/color.json
+{
+  "color": {
+    "violet": {
+      "500": { "value": "#7C3AED", "type": "color" },
+      "600": { "value": "#6D28D9", "type": "color" }
+    }
+  }
+}
+```
+
+> Primitive tokens should rarely be added — prefer extending semantic tokens first.
+
+### Adding a semantic token
+
+```json
+// packages/tokens/src/semantic/color.light.json
+{
+  "color": {
+    "accent": {
+      "primary": { "value": "{color.violet.500}", "type": "color" }
+    }
+  }
+}
+```
+
+Also add the dark variant to `color.dark.json`.
+
+### Verifying token output
+
+```bash
+pnpm --filter @stamp-ds/tokens build
+
+# Inspect the output
+cat packages/tokens/dist/css/tokens.css | grep accent
+```
+
+---
+
+## Versioning and release
+
+Stamp uses [Changesets](https://github.com/changesets/changesets) for semantic versioning.
+
+```bash
+# After making your changes, create a changeset:
+pnpm changeset
+
+# ► Select the packages you changed (space to toggle, enter to confirm)
+# ► Choose bump type: patch (bug fix), minor (new feature), major (breaking)
+# ► Write a one-line description for the changelog
+
+# Commit the generated .changeset/*.md file with your PR
+git add .changeset/
+git commit -m "chore: add changeset for stamp-button loading state fix"
+```
+
+CI automatically opens a **"Version Packages"** PR when changesets accumulate on `main`.
+Merging that PR bumps versions and publishes to npm.
+
+### Bump level guide
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Change</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Bump</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}>Bug fix, style tweak, docs</td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>patch</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}>New component, new prop, new story</td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>minor</code></td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px' }}>Removed prop, renamed token, breaking API change</td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>major</code></td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## PR checklist
+
+Before opening a pull request, confirm:
+
+- [ ] `pnpm build` passes with no errors
+- [ ] `pnpm type-check` passes
+- [ ] Storybook runs and all new stories render without errors
+- [ ] Accessibility panel shows no critical/serious violations
+- [ ] Dark mode works for all new stories
+- [ ] Changeset file created (`pnpm changeset`)
+- [ ] PR description explains *what* changed and *why*
+
+---
+
+## Getting help
+
+- Open a discussion on GitHub for design or architecture questions
+- File a bug or feature request as a GitHub Issue
+- For urgent accessibility concerns, tag `@stamp-ds/accessibility` in your PR

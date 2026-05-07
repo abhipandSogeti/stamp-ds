@@ -1,0 +1,1050 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Stamp DS / Angular" />
+
+# Using Stamp DS in Angular
+
+`@stamp-ds/angular` provides one Angular **directive** per Stamp component, bundled into
+`StampModule` for easy import. Directives (not components) are used because the Web
+Component handles all rendering — Angular only needs to type-check inputs and bridge outputs.
+
+---
+
+## Prerequisites
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Requirement</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Version</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Angular</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>≥ 17</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Node.js</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>≥ 18</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>TypeScript</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>≥ 5</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Installation
+
+```bash
+# npm
+npm install @stamp-ds/tokens @stamp-ds/components @stamp-ds/angular
+
+# pnpm
+pnpm add @stamp-ds/tokens @stamp-ds/components @stamp-ds/angular
+
+# yarn
+yarn add @stamp-ds/tokens @stamp-ds/components @stamp-ds/angular
+```
+
+**What each package does:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Package</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/tokens</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>CSS custom properties (colours, spacing, typography, motion)</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/components</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Lit Web Components — defines <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-*&gt;</code> custom elements</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/angular</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Angular directives with typed <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@Input</code> / <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@Output</code> per component</td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## One-time setup
+
+### Step 1 — Load the token CSS
+
+Add the token stylesheet to `angular.json` so it's bundled and loaded globally:
+
+```json
+// angular.json
+{
+  "projects": {
+    "your-app": {
+      "architect": {
+        "build": {
+          "options": {
+            "styles": [
+              "node_modules/@stamp-ds/tokens/dist/css/tokens.css",
+              "src/styles.css"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+Alternatively, import it in your global `src/styles.css`:
+
+```css
+/* src/styles.css */
+@import 'node_modules/@stamp-ds/tokens/dist/css/tokens.css';
+```
+
+### Step 2 — Register custom elements and import StampModule
+
+#### NgModule-based apps (Angular < 17 default)
+
+```ts
+// src/app/app.module.ts
+import { NgModule, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { StampModule } from '@stamp-ds/angular';
+import '@stamp-ds/components'; // registers all <stamp-*> custom elements globally
+
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [
+    BrowserModule,
+    StampModule,   // ← provides all Stamp directives
+  ],
+  schemas: [
+    CUSTOM_ELEMENTS_SCHEMA, // ← required: tells Angular to accept <stamp-*> tags
+  ],
+  bootstrap: [AppComponent],
+})
+export class AppModule {}
+```
+
+> **Why `CUSTOM_ELEMENTS_SCHEMA`?** By default Angular throws a template error when it
+> encounters an element with a hyphen (`<stamp-button>`) that it doesn't recognise. This
+> schema tells the compiler to allow it. You must add it wherever a module or standalone
+> component uses Stamp elements in its template.
+
+#### Standalone components (Angular 17+ default)
+
+```ts
+// src/app/app.component.ts
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { StampModule } from '@stamp-ds/angular';
+import '@stamp-ds/components';
+
+@Component({
+  standalone: true,
+  selector: 'app-root',
+  imports: [StampModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA], // ← required per-component when standalone
+  template: `
+    <stamp-button variant="solid" (stampClick)="save()">Save</stamp-button>
+  `,
+})
+export class AppComponent {
+  save() { /* ... */ }
+}
+```
+
+> **Prefer per-component imports over StampModule** in large standalone apps.
+> Import only what you use to keep the template compiler scope minimal:
+>
+> ```ts
+> import { ButtonDirective, InputDirective } from '@stamp-ds/angular';
+>
+> @Component({
+>   standalone: true,
+>   imports: [ButtonDirective, InputDirective],
+>   schemas: [CUSTOM_ELEMENTS_SCHEMA],
+>   // ...
+> })
+> ```
+
+---
+
+## Event convention
+
+Stamp Angular directives expose DOM `CustomEvent`s as `@Output()` emitters.
+The output name matches the DOM event with camelCase (no `stamp-` prefix in the binding):
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>DOM <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>CustomEvent</code></th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Angular binding</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Payload type</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>stamp-click</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampClick)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>{'CustomEvent<{ originalEvent: MouseEvent }>'}</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>stamp-input</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampInput)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>{'CustomEvent<{ value: string }>'}</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>stamp-change</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampChange)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>{'CustomEvent<{ checked: boolean; value: string }>'}</code></td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Components
+
+### Button
+
+```html
+<!-- button.component.html -->
+<stamp-button
+  variant="solid"
+  size="md"
+  type="button"
+  [disabled]="isDisabled"
+  [loading]="isLoading"
+  label=""
+  (stampClick)="onSave($event)"
+>
+  Save changes
+</stamp-button>
+```
+
+**All `@Input()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Input</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Type</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Default</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>variant</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'solid' | 'outline' | 'ghost' | 'danger'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'solid'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Visual style</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>size</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'sm' | 'md' | 'lg'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'md'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Adjusts padding and font size</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>type</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'button' | 'submit' | 'reset'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'button'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Native button type</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>disabled</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Prevents interaction; use <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>[disabled]</code> binding</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>loading</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Shows spinner; blocks clicks</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>label</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Sets <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>aria-label</code> for icon-only buttons</td>
+    </tr>
+  </tbody>
+</table>
+
+**`@Output()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Output</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Payload</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampClick)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>{'CustomEvent<{ originalEvent: MouseEvent }>'}</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Not emitted when <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>disabled</code> or <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>loading</code></td>
+    </tr>
+  </tbody>
+</table>
+
+**Component class:**
+
+```ts
+// button.component.ts
+import { Component } from '@angular/core';
+
+@Component({ /* ... */ })
+export class MyComponent {
+  isLoading = false;
+  isDisabled = false;
+
+  async onSave(event: CustomEvent<{ originalEvent: MouseEvent }>) {
+    this.isLoading = true;
+    try {
+      await saveData();
+    } finally {
+      this.isLoading = false;
+    }
+  }
+}
+```
+
+**Form submission:**
+
+```html
+<form (ngSubmit)="onSubmit()">
+  <stamp-input label="Name" [value]="name" (stampInput)="name = $event.detail.value"></stamp-input>
+  <stamp-button type="submit" variant="solid" [loading]="submitting">Submit</stamp-button>
+</form>
+```
+
+**Icon-only button:**
+
+```html
+<!-- Must set label for screen readers -->
+<stamp-button variant="ghost" label="Delete item" (stampClick)="delete()">
+  Delete
+</stamp-button>
+```
+
+---
+
+### Input
+
+```html
+<!-- input.component.html -->
+<stamp-input
+  label="Email address"
+  placeholder="you@example.com"
+  type="email"
+  [value]="email"
+  name="email"
+  helper="We'll never share your email"
+  [error]="emailError"
+  [required]="true"
+  [readonly]="false"
+  [disabled]="isDisabled"
+  size="md"
+  (stampInput)="onEmailInput($event)"
+></stamp-input>
+```
+
+**All `@Input()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Input</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Type</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Default</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>label</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Visible label; also used for <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>aria-label</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>placeholder</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Placeholder text</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>type</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'text'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Any valid HTML input type</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>value</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Controlled value</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>name</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Form field name</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>helper</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Helper text below the input</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>error</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Error message; replaces helper when non-empty</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>required</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Adds <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>*</code> to label, sets <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>aria-required</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>readonly</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>readOnly</code> on inner <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;input&gt;</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>disabled</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Prevents interaction</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>size</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'sm' | 'md' | 'lg'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'md'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Adjusts padding and font size</td>
+    </tr>
+  </tbody>
+</table>
+
+**`@Output()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Output</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Payload</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampInput)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>{'CustomEvent<{ value: string }>'}</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Fires on every keystroke</td>
+    </tr>
+  </tbody>
+</table>
+
+**Component class:**
+
+```ts
+@Component({ /* ... */ })
+export class LoginComponent {
+  email = '';
+  emailError = '';
+
+  onEmailInput(event: CustomEvent<{ value: string }>) {
+    this.email = event.detail.value;
+    this.emailError = this.email.includes('@') ? '' : 'Enter a valid email address';
+  }
+}
+```
+
+**Angular Reactive Forms integration:**
+
+Stamp Input is not a native `ControlValueAccessor` (that would require a separate adapter).
+The recommended pattern is to sync the form control value manually:
+
+```ts
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { StampModule } from '@stamp-ds/angular';
+import { CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+
+@Component({
+  standalone: true,
+  imports: [ReactiveFormsModule, StampModule],
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  template: `
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <stamp-input
+        label="Email"
+        type="email"
+        [value]="form.get('email')?.value ?? ''"
+        [error]="emailError"
+        (stampInput)="form.get('email')?.setValue($event.detail.value)"
+      ></stamp-input>
+      <stamp-button type="submit" variant="solid">Submit</stamp-button>
+    </form>
+  `,
+})
+export class LoginFormComponent implements OnInit {
+  form!: FormGroup;
+
+  get emailError(): string {
+    const ctrl = this.form.get('email');
+    if (ctrl?.invalid && ctrl.touched) return 'Enter a valid email';
+    return '';
+  }
+
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit() {
+    this.form = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+    });
+  }
+
+  onSubmit() {
+    this.form.markAllAsTouched();
+    if (this.form.valid) { /* submit */ }
+  }
+}
+```
+
+**Prefix/suffix slots:**
+
+```html
+<stamp-input label="Search">
+  <svg slot="prefix" aria-hidden="true">…</svg>
+</stamp-input>
+
+<stamp-input label="Amount" type="number">
+  <span slot="prefix">€</span>
+  <span slot="suffix">.00</span>
+</stamp-input>
+```
+
+---
+
+### Checkbox
+
+```html
+<!-- checkbox.component.html -->
+<stamp-checkbox
+  label="Accept terms"
+  name="terms"
+  value="accepted"
+  [checked]="isAccepted"
+  [indeterminate]="isIndeterminate"
+  [disabled]="isDisabled"
+  size="md"
+  (stampChange)="onAccept($event)"
+></stamp-checkbox>
+```
+
+**All `@Input()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Input</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Type</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Default</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>label</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Visible label text</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>name</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Form field name</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>value</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>''</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Value included in <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>e.detail.value</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>checked</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Controlled checked state</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>indeterminate</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Tri-state; visual only (value is still <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code>)</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>disabled</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Prevents interaction</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>size</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'sm' | 'md' | 'lg'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'md'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Adjusts checkbox and label size</td>
+    </tr>
+  </tbody>
+</table>
+
+**`@Output()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Output</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Payload</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampChange)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>{'CustomEvent<{ checked: boolean; value: string }>'}</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Fires on user interaction only</td>
+    </tr>
+  </tbody>
+</table>
+
+**Component class:**
+
+```ts
+@Component({ /* ... */ })
+export class FormComponent {
+  isAccepted = false;
+
+  onAccept(event: CustomEvent<{ checked: boolean; value: string }>) {
+    this.isAccepted = event.detail.checked;
+    // event.detail.value === 'accepted' (the value input)
+  }
+}
+```
+
+**Select-all pattern (indeterminate):**
+
+```ts
+@Component({
+  template: `
+    <stamp-checkbox
+      label="Select all"
+      [checked]="allSelected"
+      [indeterminate]="someSelected"
+      (stampChange)="toggleAll()"
+    ></stamp-checkbox>
+    <stamp-checkbox
+      *ngFor="let item of items"
+      [label]="item.name"
+      [checked]="item.selected"
+      (stampChange)="toggle(item)"
+    ></stamp-checkbox>
+  `,
+})
+export class SelectAllComponent {
+  items = [
+    { name: 'Apples', selected: false },
+    { name: 'Bananas', selected: false },
+    { name: 'Cherries', selected: false },
+  ];
+
+  get allSelected() { return this.items.every((i) => i.selected); }
+  get someSelected() { return this.items.some((i) => i.selected) && !this.allSelected; }
+
+  toggleAll() {
+    const next = !this.allSelected;
+    this.items = this.items.map((i) => ({ ...i, selected: next }));
+  }
+
+  toggle(item: { name: string; selected: boolean }) {
+    item.selected = !item.selected;
+  }
+}
+```
+
+**Custom label with HTML (slot):**
+
+When no `label` input is set, the element's projected content is used:
+
+```html
+<!-- label is empty — slot content is used instead -->
+<stamp-checkbox>
+  I agree to the <a href="/terms">Terms of Service</a>
+</stamp-checkbox>
+```
+
+---
+
+### Badge
+
+```html
+<!-- badge.component.html -->
+<stamp-badge
+  variant="success"
+  size="md"
+  [live]="isDynamic"
+>
+  Active
+</stamp-badge>
+```
+
+**All `@Input()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Input</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Type</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Default</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>variant</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'neutral' | 'brand' | 'danger' | 'success' | 'warning'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'neutral'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Colour scheme</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>size</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'sm' | 'md' | 'lg'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'md'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>live</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>boolean</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>false</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Sets <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>aria-live="polite"</code> for screen readers</td>
+    </tr>
+  </tbody>
+</table>
+
+Badge has **no `@Output()` bindings** — it is purely presentational.
+
+**Variant semantics:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Variant</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Use case</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>neutral</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Non-semantic labels, counts, version tags</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>brand</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Featured or highlighted items</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>success</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Completed, approved, active states</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>warning</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Needs attention, pending review</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>danger</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Error state, rejected, overdue</td>
+    </tr>
+  </tbody>
+</table>
+
+**Dynamic count badge:**
+
+```ts
+@Component({
+  template: `
+    <stamp-badge variant="danger" [live]="true">
+      {{ unreadCount > 99 ? '99+' : unreadCount }}
+    </stamp-badge>
+  `,
+})
+export class NotificationBadge {
+  unreadCount = 0;
+}
+```
+
+---
+
+### Spinner
+
+```html
+<stamp-spinner size="md" label="Loading results"></stamp-spinner>
+```
+
+**All `@Input()` bindings:**
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Input</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Type</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Default</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Notes</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>size</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'sm' | 'md' | 'lg'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'md'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>label</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>string</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>'Loading'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>aria-label</code> for screen readers</td>
+    </tr>
+  </tbody>
+</table>
+
+Spinner has **no `@Output()` bindings** — it is purely presentational.
+
+**Section loading pattern:**
+
+```ts
+@Component({
+  template: `
+    <ng-container *ngIf="isLoading; else content">
+      <div class="loading-wrapper" role="status">
+        <stamp-spinner size="lg" label="Loading your data"></stamp-spinner>
+      </div>
+    </ng-container>
+    <ng-template #content>
+      <!-- actual content here -->
+    </ng-template>
+  `,
+})
+export class DataSectionComponent {
+  isLoading = true;
+}
+```
+
+---
+
+## Change detection
+
+Stamp components are Lit Web Components — they manage their own rendering outside
+Angular's change detection tree. This has two practical implications:
+
+**Property bindings work without `ChangeDetectionStrategy.OnPush`:**
+
+```html
+<!-- This updates correctly even with OnPush -->
+<stamp-button [loading]="isLoading">Save</stamp-button>
+```
+
+**Output events trigger Angular change detection automatically:**
+
+Angular's event binding `(stampClick)="..."` runs inside Angular's zone, so state
+updates inside the handler are reflected in the template immediately — no
+`markForCheck()` needed.
+
+**When using `ChangeDetectionStrategy.OnPush` and reading output values:**
+
+```ts
+@Component({
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class MyComponent {
+  value = '';
+
+  constructor(private cd: ChangeDetectorRef) {}
+
+  onInput(e: CustomEvent<{ value: string }>) {
+    this.value = e.detail.value;
+    // Angular's (stampInput) binding handles markForCheck() automatically
+    // Only call cd.markForCheck() if you update state outside event handlers
+  }
+}
+```
+
+---
+
+## Angular Universal (SSR)
+
+Stamp components use browser APIs (`customElements.define`, shadow DOM). If you render
+server-side with Angular Universal, guard the registration:
+
+```ts
+// app.module.ts or main.ts
+import { isPlatformBrowser } from '@angular/common';
+import { PLATFORM_ID, inject } from '@angular/core';
+
+// In a service or APP_INITIALIZER
+const platformId = inject(PLATFORM_ID);
+if (isPlatformBrowser(platformId)) {
+  import('@stamp-ds/components'); // dynamic import — skipped on server
+}
+```
+
+Token CSS is plain CSS and is safe to load in any environment.
+
+---
+
+## Dark mode
+
+Toggle the token stylesheet link at runtime. The simplest approach:
+
+```ts
+// src/app/services/theme.service.ts
+import { Injectable } from '@angular/core';
+
+@Injectable({ providedIn: 'root' })
+export class ThemeService {
+  private isDark = false;
+
+  toggle() {
+    this.isDark = !this.isDark;
+    const link = document.getElementById('stamp-tokens') as HTMLLinkElement;
+    if (!link) return;
+    link.href = this.isDark
+      ? 'assets/tokens.dark.css'   // copy from node_modules in angular.json assets
+      : 'assets/tokens.css';
+  }
+}
+```
+
+In `angular.json`, copy the token files to `src/assets/`:
+
+```json
+"assets": [
+  "src/favicon.ico",
+  "src/assets",
+  {
+    "glob": "tokens*.css",
+    "input": "node_modules/@stamp-ds/tokens/dist/css",
+    "output": "assets"
+  }
+]
+```
+
+In `index.html`:
+
+```html
+<link id="stamp-tokens" rel="stylesheet" href="assets/tokens.css" />
+```
+
+See [Theming](?path=/docs/stamp-ds-theming--docs) for the full guide.
+
+---
+
+## Theming / token overrides
+
+Override CSS custom properties in your `styles.css` after the token import:
+
+```css
+/* src/styles.css */
+:root {
+  /* Brand colour override */
+  --stamp-color-brand-primary: #7C3AED;
+
+  /* Global radius change */
+  --stamp-button-radius: 9999px;
+}
+```
+
+Per-component override via a CSS class:
+
+```css
+/* Only affect buttons in the checkout footer */
+.checkout-footer stamp-button {
+  --stamp-button-bg: #7C3AED;
+  --stamp-button-radius: 9999px;
+}
+```
+
+---
+
+## Gotchas
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Situation</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>What happens</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Fix</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Missing <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>CUSTOM_ELEMENTS_SCHEMA</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Template compilation error: "stamp-button is not a known element"</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Add <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>schemas: [CUSTOM_ELEMENTS_SCHEMA]</code> to every module or standalone component that uses Stamp tags</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Missing <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>import '@stamp-ds/components'</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Components render as unknown elements with no styles or behaviour</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Import the side-effect file in <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>main.ts</code> or <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>app.module.ts</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Missing token CSS</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Components render but unstyled (no colour, spacing)</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Add the CSS to <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>angular.json</code> styles array</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampChange)</code> vs <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(change)</code> on Checkbox</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Native <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(change)</code> fires on the host element and may not include typed detail</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Always use <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampChange)</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampClick)</code> vs <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(click)</code> on Button</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Native <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(click)</code> fires even when <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>loading</code> or <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>disabled</code>; <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampClick)</code> is guarded</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Always use <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampClick)</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Property binding without <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>[]</code> brackets</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Angular treats it as a static string, not a bound value</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Use <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>[disabled]="isDisabled"</code> not <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>disabled="isDisabled"</code></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Using <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>ngModel</code> on stamp-input</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>ngModel</code> requires a <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>ControlValueAccessor</code> which Stamp does not implement</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Use <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>[value]</code> + <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>(stampInput)</code> for two-way binding</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid transparent' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>SSR with Angular Universal</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>customElements.define</code> throws on the server</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Guard <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>import '@stamp-ds/components'</code> with <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>isPlatformBrowser</code></td>
+    </tr>
+  </tbody>
+</table>
