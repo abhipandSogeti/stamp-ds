@@ -84,15 +84,6 @@ const config: StorybookConfig = {
     '@storybook/addon-a11y',
 
     /**
-     * @storybook/addon-themes
-     * Adds a toolbar button to switch between named CSS class themes.
-     * We'll configure it in preview.ts to toggle light/dark mode by
-     * swapping the tokens.css / tokens.dark.css custom properties on
-     * the document root.
-     */
-    '@storybook/addon-themes',
-
-    /**
      * @storybook/addon-viewport
      * Adds a toolbar dropdown to simulate device screen sizes.
      * Built-in viewports: iPhone, iPad, desktop, etc.
