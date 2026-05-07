@@ -1,0 +1,303 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Stamp DS / Theming" />
+
+# Theming
+
+Stamp's theming model is CSS-native: design tokens are CSS custom properties that cascade
+from the document root into every component's Shadow DOM. Switching themes means swapping
+one stylesheet — no JavaScript theme providers, no React context, no Angular services.
+
+---
+
+## How it works
+
+<div style={{ border: '1px solid #E5E7EB', borderRadius: 8, overflow: 'hidden', fontSize: 13, marginBottom: 8 }}>
+  <div style={{ background: '#F9FAFB', padding: '10px 16px', borderBottom: '1px solid #E5E7EB', fontWeight: 600, color: '#374151' }}>
+    document root <code style={{background:'#F3F4F6',padding:'1px 5px',borderRadius:3,fontSize:12}}>&lt;html&gt;</code>
+  </div>
+  <div style={{ padding: '12px 16px', borderBottom: '1px solid #F3F4F6', background: '#fff' }}>
+    <div style={{ color: '#6B7280', marginBottom: 6 }}>tokens.css loaded → sets all <code style={{background:'#F3F4F6',padding:'1px 5px',borderRadius:3,fontSize:12}}>--stamp-*</code> custom properties</div>
+    <div style={{ color: '#9CA3AF', fontSize: 12, marginBottom: 10 }}>CSS custom properties cascade into every shadow root automatically</div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6, paddingLeft: 16, borderLeft: '2px solid #E5E7EB' }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+        <code style={{background:'#EFF6FF',color:'#1D4ED8',padding:'2px 8px',borderRadius:3,fontSize:12,whiteSpace:'nowrap'}}>&lt;stamp-button&gt;</code>
+        <span style={{ color: '#6B7280' }}>shadow root → <code style={{background:'#F3F4F6',padding:'1px 5px',borderRadius:3,fontSize:12}}>background: var(--stamp-color-brand-primary)</code></span>
+      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+        <code style={{background:'#EFF6FF',color:'#1D4ED8',padding:'2px 8px',borderRadius:3,fontSize:12,whiteSpace:'nowrap'}}>&lt;stamp-input&gt;</code>
+        <span style={{ color: '#6B7280' }}>shadow root → <code style={{background:'#F3F4F6',padding:'1px 5px',borderRadius:3,fontSize:12}}>border-color: var(--stamp-color-border-default)</code></span>
+      </div>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'baseline' }}>
+        <code style={{background:'#EFF6FF',color:'#1D4ED8',padding:'2px 8px',borderRadius:3,fontSize:12,whiteSpace:'nowrap'}}>&lt;stamp-badge&gt;</code>
+        <span style={{ color: '#6B7280' }}>shadow root → <code style={{background:'#F3F4F6',padding:'1px 5px',borderRadius:3,fontSize:12}}>color: var(--stamp-color-text-primary)</code></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+Loading `tokens.dark.css` instead re-resolves every `var(--stamp-*)` reference simultaneously.
+No per-component changes are needed.
+
+---
+
+## Dark Mode
+
+### Option 1: HTML attribute toggle (recommended)
+
+The cleanest approach — keep both stylesheets in `<head>` and toggle an attribute:
+
+```html
+<head>
+  <link id="stamp-theme" rel="stylesheet" href="@stamp-ds/tokens/dist/css/tokens.css" />
+</head>
+```
+
+```js
+function setTheme(scheme) {
+  const link = document.getElementById('stamp-theme');
+  const base = 'node_modules/@stamp-ds/tokens/dist/css/';
+  link.href = scheme === 'dark' ? `${base}tokens.dark.css` : `${base}tokens.css`;
+  document.documentElement.setAttribute('data-scheme', scheme);
+}
+
+// Toggle
+setTheme('dark');
+setTheme('light');
+```
+
+Use `data-scheme` for any custom CSS you want to scope to a theme:
+
+```css
+[data-scheme='dark'] .my-sidebar {
+  backdrop-filter: blur(8px);
+}
+```
+
+### Option 2: Follow the OS preference automatically
+
+```js
+const mq = window.matchMedia('(prefers-color-scheme: dark)');
+
+function applySystemTheme() {
+  setTheme(mq.matches ? 'dark' : 'light');
+}
+
+applySystemTheme();               // apply on load
+mq.addEventListener('change', applySystemTheme);  // respond to OS changes
+```
+
+### Option 3: Load the correct file server-side
+
+For SSR apps, emit the correct `<link>` based on a cookie or `Accept-CH` hint:
+
+```ts
+// Next.js: pages/_document.tsx
+import Document, { Html, Head, Main, NextScript } from 'next/document';
+
+export default class MyDocument extends Document {
+  render() {
+    // Read from cookie in getInitialProps for real implementation
+    const scheme = 'light';
+    const tokenFile = scheme === 'dark' ? 'tokens.dark.css' : 'tokens.css';
+
+    return (
+      <Html data-scheme={scheme}>
+        <Head>
+          <link
+            rel="stylesheet"
+            href={`/_next/static/css/${tokenFile}`}
+          />
+        </Head>
+        <body>
+          <Main />
+          <NextScript />
+        </body>
+      </Html>
+    );
+  }
+}
+```
+
+### React integration
+
+```tsx
+// useTheme.ts
+import { useState, useEffect } from 'react';
+
+type Scheme = 'light' | 'dark';
+
+export function useTheme() {
+  const [scheme, setScheme] = useState<Scheme>('light');
+
+  useEffect(() => {
+    const link = document.getElementById('stamp-theme') as HTMLLinkElement;
+    const base = '/node_modules/@stamp-ds/tokens/dist/css/';
+    link.href = scheme === 'dark' ? `${base}tokens.dark.css` : `${base}tokens.css`;
+    document.documentElement.setAttribute('data-scheme', scheme);
+  }, [scheme]);
+
+  return { scheme, setScheme };
+}
+
+// ThemeToggle.tsx
+import { useTheme } from './useTheme';
+import { Button } from '@stamp-ds/react';
+
+export function ThemeToggle() {
+  const { scheme, setScheme } = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      onStampClick={() => setScheme(scheme === 'light' ? 'dark' : 'light')}
+    >
+      {scheme === 'light' ? 'Dark' : 'Light'}
+    </Button>
+  );
+}
+```
+
+### Angular integration
+
+```ts
+// theme.service.ts
+import { Injectable, Inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
+
+@Injectable({ providedIn: 'root' })
+export class ThemeService {
+  private scheme: 'light' | 'dark' = 'light';
+
+  constructor(@Inject(DOCUMENT) private doc: Document) {}
+
+  toggle() {
+    this.scheme = this.scheme === 'light' ? 'dark' : 'light';
+    this.apply();
+  }
+
+  private apply() {
+    const link = this.doc.getElementById('stamp-theme') as HTMLLinkElement;
+    const base = 'node_modules/@stamp-ds/tokens/dist/css/';
+    link.href = `${base}tokens${this.scheme === 'dark' ? '.dark' : ''}.css`;
+    this.doc.documentElement.setAttribute('data-scheme', this.scheme);
+  }
+}
+```
+
+---
+
+## Custom Brand Theming
+
+Override semantic tokens to apply a custom brand palette. Place overrides *after*
+loading `tokens.css` so they win the cascade:
+
+```css
+/* brand.css */
+:root {
+  /* Primary brand colour */
+  --stamp-color-brand-primary:       #7C3AED;  /* violet-600 */
+  --stamp-color-brand-primary-hover: #6D28D9;  /* violet-700 */
+  --stamp-color-brand-primary-text:  #FFFFFF;
+
+  /* Secondary accent */
+  --stamp-color-brand-secondary:     #059669;  /* emerald-600 */
+
+  /* Shape language — square corners */
+  --stamp-radius-sm: 0;
+  --stamp-radius-md: 2px;
+  --stamp-radius-lg: 4px;
+  --stamp-radius-xl: 6px;
+
+  /* Typography */
+  --stamp-font-family-sans: 'Figtree', system-ui, sans-serif;
+}
+```
+
+```html
+<head>
+  <link rel="stylesheet" href="@stamp-ds/tokens/dist/css/tokens.css" />
+  <link rel="stylesheet" href="brand.css" />  <!-- overrides after -->
+</head>
+```
+
+### Dark mode variant of your brand
+
+Provide dark-mode overrides scoped to `[data-scheme='dark']`:
+
+```css
+/* brand.css */
+:root {
+  --stamp-color-brand-primary: #7C3AED;
+}
+
+[data-scheme='dark'] {
+  --stamp-color-brand-primary: #A78BFA;  /* lighter violet for dark backgrounds */
+}
+```
+
+---
+
+## Per-Component Overrides
+
+Override component-tier tokens to restyle a single component type without touching
+the global palette:
+
+```css
+/* Make all buttons in the marketing nav pill-shaped */
+.marketing-nav stamp-button {
+  --stamp-button-radius: 9999px;
+  --stamp-button-padding-x: 1.5rem;
+}
+
+/* Wider inputs in the checkout flow */
+.checkout-form stamp-input {
+  --stamp-input-min-width: 360px;
+  --stamp-input-border-width: 2px;
+}
+```
+
+To target a single instance, use an inline style or a unique class on the element:
+
+```html
+<stamp-button
+  style="--stamp-button-bg: #7C3AED; --stamp-button-bg-hover: #6D28D9;"
+  variant="solid"
+>
+  Special action
+</stamp-button>
+```
+
+---
+
+## Storybook Theme Preview
+
+Use the **Color Scheme** toolbar button at the top of this Storybook to
+toggle light and dark mode across all stories. The toolbar is wired to swap the token
+CSS file exactly as your application would.
+
+---
+
+## Reference
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Topic</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Link</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}>Token system</td>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/stamp-ds-design-tokens--docs">Design Tokens</a></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}>Token source files</td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>packages/tokens/src/</code> in the monorepo</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px' }}>Adding a new token</td>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/stamp-ds-contributing--docs">Contributing</a></td>
+    </tr>
+  </tbody>
+</table>

@@ -1,0 +1,312 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Stamp DS / Design Tokens" />
+
+# Design Tokens
+
+Design tokens are the atomic, named decisions that encode visual style — colours, spacing, typography,
+motion, and elevation — into variables that components consume and that tooling can transform into any
+output format.
+
+Stamp tokens are built with [Style Dictionary](https://amzn.github.io/style-dictionary) and follow a
+strict three-tier pipeline.
+
+---
+
+## Three-Tier Architecture
+
+<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 0, maxWidth: 640, fontFamily: 'inherit' }}>
+  <div style={{ border: '1px solid #D1D5DB', borderRadius: 8, padding: '20px 24px', background: '#F0F4FF' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+      <span style={{ background: '#1A5BB6', color: '#fff', borderRadius: 4, padding: '2px 10px', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>TIER 1</span>
+      <strong style={{ fontSize: 15 }}>Primitive</strong>
+    </div>
+    <p style={{ margin: '0 0 12px', color: '#4B5563', fontSize: 13 }}>Raw, context-free values. Never referenced directly by UI components.</p>
+    <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
+      <tbody>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>color.blue.500</code></td><td style={{ color: '#111827' }}><code>#1A5BB6</code></td></tr>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>spacing.4</code></td><td style={{ color: '#111827' }}><code>16px</code></td></tr>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>radius.md</code></td><td style={{ color: '#111827' }}><code>6px</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0', color: '#9CA3AF', fontSize: 12, gap: 2 }}>
+    <span>referenced by</span>
+    <span style={{ fontSize: 18, lineHeight: 1 }}>↓</span>
+  </div>
+
+  <div style={{ border: '1px solid #D1D5DB', borderRadius: 8, padding: '20px 24px', background: '#F0FAF4' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+      <span style={{ background: '#16A34A', color: '#fff', borderRadius: 4, padding: '2px 10px', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>TIER 2</span>
+      <strong style={{ fontSize: 15 }}>Semantic</strong>
+    </div>
+    <p style={{ margin: '0 0 12px', color: '#4B5563', fontSize: 13 }}>Intent-named aliases. This tier changes per theme — it's where light/dark diverges.</p>
+    <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
+      <tbody>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>color.brand.primary</code></td><td style={{ color: '#111827' }}><code>{'{color.blue.500}'}</code></td></tr>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>color.surface.default</code></td><td style={{ color: '#111827' }}><code>{'{color.neutral.50}'}</code> <span style={{ color: '#9CA3AF' }}>(light)</span></td></tr>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>color.surface.default</code></td><td style={{ color: '#111827' }}><code>{'{color.neutral.900}'}</code> <span style={{ color: '#9CA3AF' }}>(dark)</span></td></tr>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>spacing.component.md</code></td><td style={{ color: '#111827' }}><code>{'{spacing.4}'}</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '6px 0', color: '#9CA3AF', fontSize: 12, gap: 2 }}>
+    <span>referenced by</span>
+    <span style={{ fontSize: 18, lineHeight: 1 }}>↓</span>
+  </div>
+
+  <div style={{ border: '1px solid #D1D5DB', borderRadius: 8, padding: '20px 24px', background: '#FFF7ED' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+      <span style={{ background: '#D97706', color: '#fff', borderRadius: 4, padding: '2px 10px', fontSize: 12, fontWeight: 600, letterSpacing: '0.05em' }}>TIER 3</span>
+      <strong style={{ fontSize: 15 }}>Component</strong>
+    </div>
+    <p style={{ margin: '0 0 12px', color: '#4B5563', fontSize: 13 }}>Per-component aliases at the lowest specificity. Override these to restyle a single component.</p>
+    <table style={{ borderCollapse: 'collapse', width: '100%', fontSize: 13 }}>
+      <tbody>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>button.bg</code></td><td style={{ color: '#111827' }}><code>{'{color.brand.primary}'}</code></td></tr>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>button.radius</code></td><td style={{ color: '#111827' }}><code>{'{radius.md}'}</code></td></tr>
+        <tr><td style={{ padding: '3px 12px 3px 0', color: '#6B7280' }}><code>input.border</code></td><td style={{ color: '#111827' }}><code>{'{color.border.default}'}</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+> **Rule**: Always reference one tier up — components reference semantic tokens, semantic tokens
+> reference primitive tokens. Never skip a tier.
+
+See [ADR-002](https://github.com/your-org/stamp-ds/blob/main/docs/ADR-002-token-tiers.md) for
+the architectural rationale.
+
+---
+
+## Token Output Formats
+
+Style Dictionary compiles the three-tier source into multiple output formats from a single build:
+
+| Format | Import path | Use case |
+|--------|-------------|----------|
+| **CSS custom properties (light)** | `@stamp-ds/tokens/dist/css/tokens.css` | Default; load once at the document root |
+| **CSS custom properties (dark)** | `@stamp-ds/tokens/dist/css/tokens.dark.css` | Swap at runtime for dark mode |
+| **SCSS variables** | `@stamp-ds/tokens/dist/scss/_tokens.scss` | SCSS-based projects |
+| **JavaScript (ES module)** | `@stamp-ds/tokens/dist/js/tokens.js` | Runtime token access, Tailwind config |
+| **TypeScript types** | `@stamp-ds/tokens/dist/js/tokens.d.ts` | Typed token keys |
+| **JSON** | `@stamp-ds/tokens/dist/json/tokens.json` | Design tools, documentation generators |
+
+---
+
+## Token Categories
+
+### Color
+
+Color tokens follow semantic naming — the name describes *purpose*, not appearance:
+
+| Token | Light value | Dark value | Usage |
+|-------|-------------|------------|-------|
+| `--stamp-color-brand-primary` | `#1A5BB6` | `#4D8FDB` | Primary CTAs, links, focus rings |
+| `--stamp-color-brand-secondary` | `#FF8800` | `#FFA040` | Accents, highlights |
+| `--stamp-color-surface-default` | `#F5F7FA` | `#111827` | Page and card backgrounds |
+| `--stamp-color-surface-raised` | `#FFFFFF` | `#1F2937` | Elevated surfaces, dropdowns |
+| `--stamp-color-border-default` | `#D1D5DB` | `#374151` | Input borders, dividers |
+| `--stamp-color-text-primary` | `#111827` | `#F9FAFB` | Body copy |
+| `--stamp-color-text-secondary` | `#6B7280` | `#9CA3AF` | Labels, captions |
+| `--stamp-color-text-disabled` | `#9CA3AF` | `#4B5563` | Disabled state text |
+| `--stamp-color-feedback-error` | `#DC2626` | `#F87171` | Error messages, borders |
+| `--stamp-color-feedback-success` | `#16A34A` | `#4ADE80` | Success states |
+| `--stamp-color-feedback-warning` | `#D97706` | `#FCD34D` | Warnings |
+
+### Spacing
+
+Spacing tokens use a 4px base grid:
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--stamp-spacing-1` | `4px` | Icon padding, tight gaps |
+| `--stamp-spacing-2` | `8px` | Inline gaps, small padding |
+| `--stamp-spacing-3` | `12px` | Input padding, chip gaps |
+| `--stamp-spacing-4` | `16px` | Component padding (md) |
+| `--stamp-spacing-6` | `24px` | Section gaps |
+| `--stamp-spacing-8` | `32px` | Layout gutters |
+| `--stamp-spacing-12` | `48px` | Section spacing |
+| `--stamp-spacing-16` | `64px` | Page-level margins |
+
+### Typography
+
+| Token | Value |
+|-------|-------|
+| `--stamp-font-family-sans` | `Inter, system-ui, -apple-system, sans-serif` |
+| `--stamp-font-family-mono` | `JetBrains Mono, Menlo, Monaco, monospace` |
+| `--stamp-font-size-xs` | `0.75rem` (12px) |
+| `--stamp-font-size-sm` | `0.875rem` (14px) |
+| `--stamp-font-size-md` | `1rem` (16px) |
+| `--stamp-font-size-lg` | `1.125rem` (18px) |
+| `--stamp-font-size-xl` | `1.25rem` (20px) |
+| `--stamp-font-weight-regular` | `400` |
+| `--stamp-font-weight-medium` | `500` |
+| `--stamp-font-weight-semibold` | `600` |
+| `--stamp-line-height-tight` | `1.25` |
+| `--stamp-line-height-normal` | `1.5` |
+
+### Border radius
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--stamp-radius-sm` | `4px` | Tags, badges |
+| `--stamp-radius-md` | `6px` | Inputs, buttons |
+| `--stamp-radius-lg` | `8px` | Cards, modals |
+| `--stamp-radius-xl` | `12px` | Sheets, panels |
+| `--stamp-radius-full` | `9999px` | Pills, avatar circles |
+
+### Motion
+
+| Token | Value | Usage |
+|-------|-------|-------|
+| `--stamp-duration-fast` | `100ms` | Micro-interactions (hover, focus) |
+| `--stamp-duration-base` | `200ms` | Component transitions (expand, open) |
+| `--stamp-duration-slow` | `350ms` | Page-level transitions |
+| `--stamp-easing-standard` | `cubic-bezier(0.4, 0, 0.2, 1)` | General-purpose |
+| `--stamp-easing-decelerate` | `cubic-bezier(0, 0, 0.2, 1)` | Enter/open |
+| `--stamp-easing-accelerate` | `cubic-bezier(0.4, 0, 1, 1)` | Exit/close |
+
+---
+
+## Using Tokens in Your CSS
+
+Reference semantic tokens directly in your application styles:
+
+```css
+/* Correct — reference semantic tokens */
+.my-card {
+  background: var(--stamp-color-surface-raised);
+  border: 1px solid var(--stamp-color-border-default);
+  border-radius: var(--stamp-radius-lg);
+  padding: var(--stamp-spacing-6);
+  font-family: var(--stamp-font-family-sans);
+  color: var(--stamp-color-text-primary);
+}
+
+/* Incorrect — never reference primitive tokens in application code */
+.my-card {
+  background: var(--stamp-primitive-neutral-50); /* primitive: bypasses dark mode */
+  border-radius: 8px;                            /* hardcoded: not a token */
+}
+```
+
+### SCSS
+
+```scss
+// Import SCSS variables
+@use '@stamp-ds/tokens/dist/scss/tokens' as t;
+
+.my-card {
+  background: t.$color-surface-raised;
+  border-radius: t.$radius-lg;
+  padding: t.$spacing-6;
+}
+```
+
+### JavaScript / TypeScript
+
+```ts
+import { tokens } from '@stamp-ds/tokens';
+
+// typed access
+const primary = tokens.color.brand.primary;    // '#1A5BB6'
+const spacingMd = tokens.spacing[4];           // '16px'
+
+// useful for Tailwind configuration
+// tailwind.config.ts
+export default {
+  theme: {
+    extend: {
+      colors: {
+        brand: tokens.color.brand,
+        surface: tokens.color.surface,
+      },
+      spacing: tokens.spacing,
+      borderRadius: tokens.radius,
+    },
+  },
+};
+```
+
+---
+
+## Overriding Tokens
+
+### Application-level override
+
+To restyle the entire system (custom brand), override semantic tokens on `:root` *after*
+loading `tokens.css`:
+
+```css
+/* brand-override.css — load after @stamp-ds/tokens/dist/css/tokens.css */
+:root {
+  /* Swap brand colours to your brand */
+  --stamp-color-brand-primary: #7C3AED;        /* violet */
+  --stamp-color-brand-secondary: #10B981;      /* emerald */
+
+  /* Change border radius to square style */
+  --stamp-radius-sm: 0;
+  --stamp-radius-md: 2px;
+  --stamp-radius-lg: 4px;
+}
+```
+
+### Component-level override
+
+To restyle a single component instance, override its component-tier tokens:
+
+```css
+/* Only affect buttons inside .checkout-footer */
+.checkout-footer stamp-button {
+  --stamp-button-bg: #7C3AED;
+  --stamp-button-bg-hover: #6D28D9;
+  --stamp-button-radius: 9999px; /* pill shape */
+}
+```
+
+### Dark mode per-section
+
+You can apply dark mode to a subsection of the page:
+
+```html
+<!-- Dark sidebar, light main content -->
+<aside>
+  <link rel="stylesheet" href="tokens.dark.css" />
+  <stamp-button variant="solid">Action</stamp-button>
+</aside>
+```
+
+Or toggle programmatically — see [Theming](?path=/docs/stamp-ds-theming--docs).
+
+---
+
+## Token Source Files
+
+Token source lives in `packages/tokens/src/` in the monorepo:
+
+```
+tokens/src/
+├── primitive/          Tier 1: raw values (never touch in themes)
+│   ├── color.json
+│   ├── spacing.json
+│   ├── typography.json
+│   ├── radius.json
+│   ├── motion.json
+│   ├── shadow.json
+│   ├── opacity.json
+│   └── z-index.json
+├── semantic/           Tier 2: intent-named; one set per theme
+│   ├── color.light.json
+│   ├── color.dark.json
+│   ├── spacing.json
+│   └── typography.json
+└── component/          Tier 3: per-component overrides
+    ├── button.json
+    ├── input.json
+    └── badge.json
+```
+
+To add or modify a token, see [Contributing](?path=/docs/stamp-ds-contributing--docs).

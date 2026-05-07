@@ -1,0 +1,270 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Stamp DS / Introduction" />
+
+# Stamp Design System
+
+Stamp is a **framework-agnostic design system** built on [Lit Web Components](https://lit.dev). A single
+component runtime ships everywhere — Vanilla HTML, React, Angular, or any framework — while a three-tier
+token pipeline makes theming and dark mode a one-file swap.
+
+---
+
+## Why Web Components?
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Concern</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Answer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top', fontWeight: 500 }}>Zero duplication</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>stamp-button</code> is implemented once in Lit. React and Angular packages are thin, type-safe wrappers.</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top', fontWeight: 500 }}>True style isolation</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Shadow DOM keeps component CSS scoped. CSS custom properties still inherit across shadow boundaries.</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top', fontWeight: 500 }}>Framework longevity</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Custom Elements v1 is a browser standard. Components survive framework churn.</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top', fontWeight: 500 }}>SSR compatibility</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Declarative Shadow DOM (DSD) enables server-side rendering without a JS runtime.</td>
+    </tr>
+  </tbody>
+</table>
+
+See [ADR-001](https://github.com/your-org/stamp-ds/blob/main/docs/ADR-001-web-components-over-react.md)
+for the full architectural rationale.
+
+---
+
+## Package Ecosystem
+
+Install only what your project needs. Every framework package depends on `@stamp-ds/components` and
+`@stamp-ds/tokens` — they are listed as `peerDependencies`.
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Package</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/tokens</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Design tokens: CSS custom properties, SCSS variables, and typed JS/TS exports</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/components</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Lit Web Components — the single source of truth for all component behaviour</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/react</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>React wrappers with typed props, ref forwarding, and idiomatic event callbacks</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/angular</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Angular directives + <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>StampModule</code> for template binding and dependency injection</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>@stamp-ds/icons</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>SVG sprite + <code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-icon&gt;</code> Web Component</td>
+    </tr>
+  </tbody>
+</table>
+
+```bash
+# Vanilla HTML / plain JS
+npm install @stamp-ds/tokens @stamp-ds/components
+
+# React
+npm install @stamp-ds/tokens @stamp-ds/components @stamp-ds/react
+
+# Angular
+npm install @stamp-ds/tokens @stamp-ds/components @stamp-ds/angular
+```
+
+---
+
+## Token Architecture
+
+Stamp tokens follow a **three-tier pipeline** that cleanly separates raw values from intent and scope:
+
+<div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '16px 0 24px', flexWrap: 'wrap' }}>
+  <div style={{ background: '#F0F4FF', border: '1px solid #C7D7F5', borderRadius: 8, padding: '12px 16px', flex: 1, minWidth: 160 }}>
+    <div style={{ fontWeight: 600, fontSize: 13, color: '#1A5BB6', marginBottom: 4 }}>Primitive tokens</div>
+    <div style={{ fontSize: 12, color: '#6B7280' }}>Raw values</div>
+  </div>
+  <div style={{ color: '#9CA3AF', fontSize: 20 }}>→</div>
+  <div style={{ background: '#F0FAF4', border: '1px solid #A7D7B8', borderRadius: 8, padding: '12px 16px', flex: 1, minWidth: 160 }}>
+    <div style={{ fontWeight: 600, fontSize: 13, color: '#16A34A', marginBottom: 4 }}>Semantic tokens</div>
+    <div style={{ fontSize: 12, color: '#6B7280' }}>Intent-named</div>
+  </div>
+  <div style={{ color: '#9CA3AF', fontSize: 20 }}>→</div>
+  <div style={{ background: '#FFF7ED', border: '1px solid #F5C97A', borderRadius: 8, padding: '12px 16px', flex: 1, minWidth: 160 }}>
+    <div style={{ fontWeight: 600, fontSize: 13, color: '#D97706', marginBottom: 4 }}>Component tokens</div>
+    <div style={{ fontSize: 12, color: '#6B7280' }}>Per-component overrides</div>
+  </div>
+</div>
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Tier</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Token example</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Purpose</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top', fontWeight: 500 }}>Primitive</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>--stamp-primitive-blue-500: #1A5BB6</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Raw values; never referenced directly in component code</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top', fontWeight: 500 }}>Semantic</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>--stamp-color-brand-primary: var(--stamp-primitive-blue-500)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Intent-named; this is the tier that changes between light and dark mode</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top', fontWeight: 500 }}>Component</td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>--stamp-button-bg: var(--stamp-color-brand-primary)</code></td>
+      <td style={{ padding: '10px 12px', verticalAlign: 'top' }}>Per-component overrides at the lowest specificity</td>
+    </tr>
+  </tbody>
+</table>
+
+Dark mode is achieved by loading `tokens.dark.css` instead of `tokens.css`. All semantic tokens
+re-resolve; no JavaScript theme providers or context are required.
+
+See [Design Tokens](?path=/docs/stamp-ds-design-tokens--docs) for the full reference.
+
+---
+
+## Component Library
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Component</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Element</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/components-button--docs">Button</a></td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-button&gt;</code></td>
+      <td style={{ padding: '10px 12px' }}><span style={{ background: '#DCFCE7', color: '#16A34A', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 500 }}>Stable</span></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/components-input--docs">Input</a></td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-input&gt;</code></td>
+      <td style={{ padding: '10px 12px' }}><span style={{ background: '#DCFCE7', color: '#16A34A', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 500 }}>Stable</span></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/components-checkbox--docs">Checkbox</a></td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-checkbox&gt;</code></td>
+      <td style={{ padding: '10px 12px' }}><span style={{ background: '#DCFCE7', color: '#16A34A', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 500 }}>Stable</span></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/components-badge--docs">Badge</a></td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-badge&gt;</code></td>
+      <td style={{ padding: '10px 12px' }}><span style={{ background: '#DCFCE7', color: '#16A34A', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 500 }}>Stable</span></td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/components-spinner--docs">Spinner</a></td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-spinner&gt;</code></td>
+      <td style={{ padding: '10px 12px' }}><span style={{ background: '#DCFCE7', color: '#16A34A', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 500 }}>Stable</span></td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px' }}>Icon</td>
+      <td style={{ padding: '10px 12px' }}><code style={{background:'#F3F4F6',padding:'2px 6px',borderRadius:3,fontSize:12}}>&lt;stamp-icon&gt;</code></td>
+      <td style={{ padding: '10px 12px' }}><span style={{ background: '#FEF9C3', color: '#854D0E', borderRadius: 4, padding: '2px 8px', fontSize: 12, fontWeight: 500 }}>Beta</span></td>
+    </tr>
+  </tbody>
+</table>
+
+---
+
+## Accessibility Commitment
+
+Every component targets **WCAG 2.2 Level AA**:
+
+- Built on native HTML semantics — `<button>`, `<input>`, `<label>`, `<fieldset>`
+- ARIA attributes applied automatically: `aria-disabled`, `aria-required`, `aria-busy`, `role="alert"`
+- Keyboard navigation works without additional configuration
+- Colour contrast ≥ 4.5:1 enforced by token values
+- **axe-core** runs on every story in this Storybook — check the **Accessibility** panel on any story
+
+---
+
+## Browser Support
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Browser</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Minimum version</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}>Chrome / Edge (Chromium)</td>
+      <td style={{ padding: '10px 12px' }}>90+</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}>Firefox</td>
+      <td style={{ padding: '10px 12px' }}>90+</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}>Safari / iOS Safari</td>
+      <td style={{ padding: '10px 12px' }}>15.4+</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px' }}>Samsung Internet</td>
+      <td style={{ padding: '10px 12px' }}>14+</td>
+    </tr>
+  </tbody>
+</table>
+
+Requires Custom Elements v1 and Shadow DOM v1. No polyfills are bundled — add
+`@webcomponents/webcomponentsjs` if you need to support older browsers.
+
+---
+
+## Quick Navigation
+
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14, marginBottom: 24 }}>
+  <thead>
+    <tr>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Page</th>
+      <th style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, background: '#F9FAFB', borderBottom: '2px solid #E5E7EB' }}>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/stamp-ds-getting-started--docs">Getting Started</a></td>
+      <td style={{ padding: '10px 12px' }}>Step-by-step install and usage for every framework</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/stamp-ds-design-tokens--docs">Design Tokens</a></td>
+      <td style={{ padding: '10px 12px' }}>Token reference, categories, and override patterns</td>
+    </tr>
+    <tr style={{ borderBottom: '1px solid #F3F4F6' }}>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/stamp-ds-theming--docs">Theming</a></td>
+      <td style={{ padding: '10px 12px' }}>Dark mode setup and brand customisation</td>
+    </tr>
+    <tr>
+      <td style={{ padding: '10px 12px' }}><a href="?path=/docs/stamp-ds-contributing--docs">Contributing</a></td>
+      <td style={{ padding: '10px 12px' }}>Add a component, a token, or a story</td>
+    </tr>
+  </tbody>
+</table>
