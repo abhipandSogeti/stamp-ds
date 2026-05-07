@@ -1,0 +1,29 @@
+{
+  "name": "@stamp-ds/angular",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types":  "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build":      "tsc --project tsconfig.json",
+    "dev":        "tsc --project tsconfig.json --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stamp-ds/components": "workspace:*"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=17",
+    "@angular/common": ">=17"
+  },
+  "devDependencies": {
+    "typescript": "^5.7",
+    "@angular/core": "^17",
+    "@angular/common": "^17"
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "@stamp-ds/react",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types":  "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build":      "tsc --project tsconfig.json",
+    "dev":        "tsc --project tsconfig.json --watch",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stamp-ds/components": "workspace:*",
+    "@lit-labs/react": "^2"
+  },
+  "peerDependencies": {
+    "react": ">=18"
+  },
+  "devDependencies": {
+    "typescript": "^5.7",
+    "@types/react": "^18"
+  }
+}
