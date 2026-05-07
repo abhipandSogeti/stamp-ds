@@ -1,0 +1,299 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Components/Button/Usage Guide" />
+
+# Button — Full Usage Guide
+
+`stamp-button` is the primary interactive action element in Stamp DS. It wraps a native
+`<button>` element inside a shadow DOM to provide consistent styling across all frameworks.
+
+---
+
+## Quick reference
+
+| Package | Import |
+|---------|--------|
+| Web Component | `import '@stamp-ds/components/button'` or `import '@stamp-ds/components'` |
+| React | `import { Button } from '@stamp-ds/react'` |
+| Angular | `import { ButtonDirective } from '@stamp-ds/angular'` — or `StampModule` |
+
+---
+
+## Props / Attributes
+
+| Prop | Type | Default | Reflected as attribute? | Description |
+|------|------|---------|------------------------|-------------|
+| `variant` | `'solid' \| 'outline' \| 'ghost' \| 'danger'` | `'solid'` | Yes | Visual style |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Yes | Adjusts padding and font size |
+| `type` | `'button' \| 'submit' \| 'reset'` | `'button'` | Yes | Passed to inner `<button>` |
+| `disabled` | `boolean` | `false` | Yes | Prevents all interaction |
+| `loading` | `boolean` | `false` | No | Shows spinner; blocks `stamp-click` |
+| `label` | `string` | `''` | No | Sets `aria-label` on inner `<button>` |
+
+> **Reflected attributes**: `variant`, `size`, `type`, `disabled` are reflected as HTML
+> attributes, so CSS attribute selectors (`[disabled]`, `[variant="danger"]`) work.
+> `loading` and `label` are Lit reactive properties only — they do not appear as attributes.
+
+---
+
+## Events
+
+### `stamp-click`
+
+```ts
+// CustomEvent detail shape
+interface StampClickDetail {
+  originalEvent: MouseEvent;
+}
+```
+
+Fired when the button is activated by:
+- Left mouse click
+- Enter key (when focused)
+- Space key (when focused)
+
+**Not fired when:**
+- `disabled` is `true`
+- `loading` is `true`
+
+**Listening in each framework:**
+
+```html
+<!-- Vanilla HTML -->
+<stamp-button id="btn" variant="solid">Save</stamp-button>
+<script>
+  document.getElementById('btn').addEventListener('stamp-click', (e) => {
+    console.log(e.detail.originalEvent); // MouseEvent
+  });
+</script>
+```
+
+```tsx
+// React
+<Button variant="solid" onStampClick={(e) => console.log(e.detail.originalEvent)}>
+  Save
+</Button>
+```
+
+```html
+<!-- Angular template -->
+<stamp-button variant="solid" (stampClick)="onSave($event)">Save</stamp-button>
+```
+
+```ts
+// Angular component class
+onSave(event: CustomEvent<{ originalEvent: MouseEvent }>) {
+  console.log(event.detail.originalEvent);
+}
+```
+
+---
+
+## Slots
+
+| Slot | Description |
+|------|-------------|
+| *(default)* | Button label / content. Accepts text, icons, or any inline HTML. |
+
+```html
+<!-- Text only -->
+<stamp-button>Save changes</stamp-button>
+
+<!-- Icon + text -->
+<stamp-button variant="solid">
+  <svg>…</svg> Save
+</stamp-button>
+
+<!-- Icon only — must also set label prop -->
+<stamp-button variant="ghost" label="Delete item">Delete</stamp-button>
+```
+
+---
+
+## CSS custom properties
+
+Override these on the element or any ancestor to restyle without forking the component.
+
+| Property | What it controls |
+|----------|-----------------|
+| `--stamp-button-bg` | Solid background colour |
+| `--stamp-button-bg-hover` | Solid background on hover |
+| `--stamp-button-bg-active` | Solid background on press |
+| `--stamp-button-text` | Label colour (solid variant) |
+| `--stamp-button-border` | Border colour (outline variant) |
+| `--stamp-button-radius` | Border radius (all variants) |
+| `--stamp-button-padding-x` | Horizontal padding |
+| `--stamp-button-padding-y` | Vertical padding |
+| `--stamp-button-font-size` | Label font size |
+| `--stamp-button-font-weight` | Label font weight |
+| `--stamp-motion-duration-fast` | Hover/focus transition duration |
+| `--stamp-motion-easing-ease-out` | Hover/focus transition easing |
+
+**Example — scoped override:**
+
+```css
+/* Pill-shaped primary button inside the checkout footer only */
+.checkout-footer stamp-button[variant="solid"] {
+  --stamp-button-radius: 9999px;
+  --stamp-button-bg: #7C3AED;
+  --stamp-button-bg-hover: #6D28D9;
+}
+```
+
+---
+
+## Variants in detail
+
+### `solid` (default)
+Filled background. Use for the **primary CTA** — one per view.
+
+```html
+<stamp-button variant="solid">Save changes</stamp-button>
+```
+
+### `outline`
+Border only, transparent background. Use as a **secondary action** alongside a solid button.
+
+```html
+<div style="display:flex;gap:0.5rem">
+  <stamp-button variant="solid">Save</stamp-button>
+  <stamp-button variant="outline">Preview</stamp-button>
+</div>
+```
+
+### `ghost`
+No border, no background. Use for **low-emphasis actions** — navigation, cancel, learn more.
+
+```html
+<stamp-button variant="ghost">Cancel</stamp-button>
+```
+
+### `danger`
+Red-family colours. Use for **destructive actions** — delete, remove, revoke.
+
+```html
+<stamp-button variant="danger">Delete account</stamp-button>
+```
+
+> Always pair a `danger` button with a confirmation dialog. Never make a destructive
+> action a single irreversible click.
+
+---
+
+## States
+
+### `disabled`
+
+```html
+<!-- HTML attribute -->
+<stamp-button disabled>Unavailable</stamp-button>
+
+<!-- React prop -->
+<Button disabled={!hasPermission}>Save</Button>
+
+<!-- Angular binding -->
+<stamp-button [disabled]="!hasPermission">Save</stamp-button>
+```
+
+`disabled` is reflected as an HTML attribute. The inner `<button>` also receives
+`disabled`, so:
+- Tab focus is blocked
+- `stamp-click` is not emitted
+- Pointer events are suppressed
+- `[disabled]` CSS selectors work
+
+### `loading`
+
+```html
+<stamp-button loading>Saving…</stamp-button>
+```
+
+`loading` shows a spinner in place of content and suppresses `stamp-click`.
+Unlike `disabled`, the button **remains focusable** — it still appears in the tab order
+and screen readers announce it as active (not disabled). The inner `<button>` receives
+`aria-busy="true"` while loading.
+
+**Pattern — async action with loading:**
+
+```tsx
+// React
+function SaveButton() {
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    setSaving(true);
+    await api.save();
+    setSaving(false);
+  };
+
+  return (
+    <Button variant="solid" loading={saving} onStampClick={handleSave}>
+      {saving ? 'Saving…' : 'Save changes'}
+    </Button>
+  );
+}
+```
+
+---
+
+## Size comparison
+
+| Size | Padding | Font size | Use when |
+|------|---------|-----------|----------|
+| `sm` | `4px 12px` | `0.75rem` | Compact UIs, table actions, inline actions |
+| `md` | `8px 16px` | `0.875rem` | Default — most UI contexts |
+| `lg` | `12px 24px` | `1rem` | Hero CTAs, prominent page actions |
+
+---
+
+## Accessibility
+
+- Uses a native `<button>` — keyboard activation (Enter/Space) works without extra JS
+- `disabled` sets both the `disabled` attribute and `aria-disabled` on the inner button
+- `loading` sets `aria-busy="true"` — screen readers announce activity
+- Icon-only buttons must use `label` prop to provide an accessible name
+- Focus ring follows `:focus-visible` — visible for keyboard, hidden for mouse
+
+**Testing checklist:**
+- [ ] Can activate with Enter and Space keys
+- [ ] Focus ring visible when navigating by keyboard
+- [ ] `disabled` button is not in tab order
+- [ ] Loading button is in tab order and announced as busy
+- [ ] Icon-only button has an accessible name
+
+---
+
+## Form integration
+
+`type="submit"` submits the nearest ancestor `<form>`:
+
+```html
+<form id="login-form" action="/login" method="post">
+  <stamp-input label="Email" name="email" type="email" required></stamp-input>
+  <stamp-button type="submit" variant="solid">Sign in</stamp-button>
+  <stamp-button type="reset" variant="ghost">Clear</stamp-button>
+</form>
+```
+
+> **Caution with Shadow DOM and form association**: In browsers that do not support
+> `ElementInternals` (FormAssociated custom elements), the inner `<button type="submit">`
+> submits the form via a synthetic click — this works in all modern browsers. Verify
+> in your target browser matrix if you support legacy environments.
+
+---
+
+## Importing a single component (tree-shaking)
+
+Instead of registering all components:
+
+```ts
+import '@stamp-ds/components'; // registers ALL stamp-* elements
+```
+
+You can register only the button:
+
+```ts
+import '@stamp-ds/components/button'; // registers <stamp-button> only
+```
+
+This is useful in micro-frontend or large monorepo setups where bundle size matters.
