@@ -253,7 +253,7 @@ export const Sizes: Story = {
  * States — disabled and loading for each variant.
  */
 export const States: Story = {
-  name: '🔁 States',
+  name: 'States',
   parameters: { controls: { disable: true } },
   render: () => html`
     <div style="display: flex; flex-direction: column; gap: 1rem;">
@@ -328,7 +328,7 @@ export const Danger: Story = {
  * Open the "Accessibility" panel in Storybook to see the axe report.
  */
 export const A11yCheck: Story = {
-  name: '♿ A11y Check',
+  name: 'A11y Check',
   parameters: {
     controls: { disable: true },
     docs: {
@@ -347,9 +347,9 @@ export const A11yCheck: Story = {
   render: () => html`
     <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
       <!-- icon-only: must have label prop for aria-label -->
-      <stamp-button variant="solid" label="Save document">💾</stamp-button>
+      <stamp-button variant="solid" label="Save document">Save</stamp-button>
       <!-- loading: aria-busy should be true -->
-      <stamp-button variant="solid" loading label="Saving document">💾</stamp-button>
+      <stamp-button variant="solid" loading label="Saving document">Save</stamp-button>
       <!-- disabled: aria-disabled should be true, pointer-events none -->
       <stamp-button variant="solid" disabled>Disabled</stamp-button>
     </div>
