@@ -29,8 +29,6 @@ jobs:
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       # "cache: pnpm" caches the pnpm *store* (downloaded tarballs).
       # This speeds up `pnpm install` — packages don't re-download.
