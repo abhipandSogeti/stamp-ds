@@ -1,0 +1,27 @@
+{
+  "name": "stamp-ds",
+  "private": true,
+  "scripts": {
+    "build":     "turbo run build",
+    "dev":       "turbo run dev",
+    "lint":      "turbo run lint",
+    "test":      "turbo run test",
+    "changeset": "changeset",
+    "version":   "changeset version",
+    "publish":   "turbo run build && changeset publish"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@bundled-es-modules/glob",
+      "esbuild",
+      "style-dictionary"
+    ]
+  },
+  "devDependencies": {
+    "turbo":             "^2",
+    "@changesets/cli":   "^2",
+    "typescript":        "^5.7",
+    "prettier":          "^3",
+    "eslint":            "^9"
+  }
+}
