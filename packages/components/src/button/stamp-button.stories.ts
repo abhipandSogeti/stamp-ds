@@ -175,6 +175,11 @@ export const Default: Story = {
     variant: 'solid',
     size: 'md',
   },
+  parameters: {
+    // Controls are live — the snapshot state is arbitrary, so skip it.
+    // Intentional visual states are covered by the individual variant stories.
+    chromatic: { disableSnapshot: true },
+  },
   /**
    * render()
    * Optional. Provide this when you need custom markup around the component

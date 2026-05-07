@@ -16,7 +16,7 @@ export const buttonStyles = css`
     font-weight: var(--stamp-button-font-weight);
     line-height: 1.5;
     border-radius: var(--stamp-button-radius);
-    border: 1.5px solid transparent;
+    border: 1.7px solid transparent;
     cursor: pointer;
     transition:
       background-color var(--stamp-motion-duration-fast) var(--stamp-motion-easing-ease-out),
