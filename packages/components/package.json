@@ -9,11 +9,11 @@
       "import": "./dist/index.js",
       "types":  "./dist/index.d.ts"
     },
-    "./button":   { "import": "./dist/button/index.js" },
-    "./input":    { "import": "./dist/input/index.js" },
-    "./checkbox": { "import": "./dist/checkbox/index.js" },
-    "./badge":    { "import": "./dist/badge/index.js" },
-    "./spinner":  { "import": "./dist/spinner/index.js" }
+    "./button":   { "import": "./dist/button/index.js",   "types": "./dist/button/index.d.ts" },
+    "./input":    { "import": "./dist/input/index.js",    "types": "./dist/input/index.d.ts" },
+    "./checkbox": { "import": "./dist/checkbox/index.js", "types": "./dist/checkbox/index.d.ts" },
+    "./badge":    { "import": "./dist/badge/index.js",    "types": "./dist/badge/index.d.ts" },
+    "./spinner":  { "import": "./dist/spinner/index.js",  "types": "./dist/spinner/index.d.ts" }
   },
   "scripts": {
     "build":      "tsc --project tsconfig.json",

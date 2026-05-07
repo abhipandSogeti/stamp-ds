@@ -1,5 +1,5 @@
 import { Directive, Input } from '@angular/core';
-import type { BadgeVariant } from '../../components/src/badge';
+import type { BadgeVariant } from '@stamp-ds/components/badge';
 
 @Directive({ selector: 'stamp-badge', standalone: true })
 export class BadgeDirective {
